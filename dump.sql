@@ -89,3 +89,11 @@ INSERT INTO control_measures (
     'Administrative Control, PPE',
     DATETIME('now'), DATETIME('now')
 );
+
+-- --------------------------------------------------------
+--  WORK PROCESSES
+-- --------------------------------------------------------
+INSERT INTO work_processes (id, project_process_id, work_id, created_at, updated_at)
+VALUES
+(1, 1, 1, DATETIME('now'), DATETIME('now')),
+(2, 1, 2, DATETIME('now'), DATETIME('now'));
