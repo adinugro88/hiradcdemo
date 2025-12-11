@@ -16,6 +16,9 @@ class RiskAssessmentsTable
             ->columns([
                 TextColumn::make('hazard.name')
                     ->searchable(),
+                TextColumn::make('description')
+                    ->limit(50)
+                    ->searchable(),
                 TextColumn::make('probability_before')
                     ->numeric()
                     ->sortable(),

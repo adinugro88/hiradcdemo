@@ -1,32 +1,30 @@
 <?php
 
-namespace App\Filament\Resources\Projects\Tables;
+namespace App\Filament\Resources\Regulations\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class ProjectsTable
+class RegulationsTable
 {
     public static function configure(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('department')
-                    ->searchable(),
-                TextColumn::make('name')
-                    ->searchable(),
-                TextColumn::make('document_number')
-                    ->searchable(),
-                TextColumn::make('form_code')
-                    ->searchable(),
-                TextColumn::make('revision')
-                    ->searchable(),
-                TextColumn::make('page_info')
-                    ->searchable(),
+                TextColumn::make('hazard.name')
+                    ->label('Hazard')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('title')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('reference_number')
+                    ->label('Ref. No.')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -40,8 +38,7 @@ class ProjectsTable
                 //
             ])
             ->recordActions([
-                ViewAction::make() 
-                    ->url(fn ($record) => route('filament.admin.resources.projects.edit', ['record' => $record])),
+                EditAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

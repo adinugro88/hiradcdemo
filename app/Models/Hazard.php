@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Hazard extends Model
 {
@@ -30,9 +29,9 @@ class Hazard extends Model
     /**
      * Get the risk assessment for the hazard.
      */
-    public function riskAssessment(): HasOne
+    public function riskAssessments(): HasMany
     {
-        return $this->hasOne(RiskAssessment::class);
+        return $this->hasMany(RiskAssessment::class);
     }
 
     /**
@@ -41,5 +40,13 @@ class Hazard extends Model
     public function controlMeasures(): HasMany
     {
         return $this->hasMany(ControlMeasure::class);
+    }
+
+    /**
+     * Get the regulations for the hazard.
+     */
+    public function regulations(): HasMany
+    {
+        return $this->hasMany(Regulation::class);
     }
 }

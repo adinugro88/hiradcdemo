@@ -11,11 +11,6 @@ class WorkForm
     {
         return $schema
             ->components([
-                TextInput::make('number')
-                    ->label('No.')
-                    ->required()
-                    ->numeric()
-                    ->minValue(1),
                 TextInput::make('name')
                     ->label('Work Name')
                     ->required()

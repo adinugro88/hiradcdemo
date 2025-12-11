@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('work_id')->constrained()->onDelete('cascade');
             $table->string('name');
-            $table->text('risk_description');
-            $table->text('regulations');
+            // $table->text('risk_description');
+            // $table->text('regulations');
             $table->timestamps();
         });
     }

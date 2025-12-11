@@ -3,8 +3,10 @@
 namespace App\Filament\Resources\Works\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -14,9 +16,6 @@ class WorksTable
     {
         return $table
             ->columns([
-                TextColumn::make('number')
-                    ->numeric()
-                    ->sortable(),
                 TextColumn::make('name')
                     ->searchable(),
                 TextColumn::make('created_at')
@@ -32,7 +31,10 @@ class WorksTable
                 //
             ])
             ->recordActions([
-                EditAction::make(),
+                ViewAction::make()
+                    ->url(fn ($record) => route('filament.admin.resources.works.edit', ['record' => $record])),
+                // EditAction::make(),
+                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

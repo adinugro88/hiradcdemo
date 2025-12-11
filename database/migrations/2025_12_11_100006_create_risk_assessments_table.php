@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('risk_assessments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('hazard_id')->constrained()->onDelete('cascade');
+            $table->text('description');
             $table->integer('probability_before');
             $table->integer('severity_before');
             $table->integer('total_before');

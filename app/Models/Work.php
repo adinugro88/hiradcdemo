@@ -24,6 +24,14 @@ class Work extends Model
     }
 
     /**
+     * Get the hazards for the work.
+     */
+    public function hazards(): HasMany
+    {
+        return $this->hasMany(Hazard::class);
+    }
+
+    /**
      * Get the project processes through work processes.
      */
     public function projectProcesses()

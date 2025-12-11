@@ -47,6 +47,7 @@ class ProjectForm
                             ->placeholder('e.g., 1 dari 1'),
                     ])
                     ->columns(2),
+
             ]);
     }
 }

@@ -10,6 +10,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\DetachAction;
 use Filament\Actions\DetachBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -24,10 +25,6 @@ class WorksRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                TextInput::make('number')
-                    ->required()
-                    ->numeric()
-                    ->label('No.'),
                 TextInput::make('name')
                     ->required()
                     ->maxLength(255),
@@ -39,9 +36,6 @@ class WorksRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                TextColumn::make('number')
-                    ->label('No.')
-                    ->sortable(),
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
@@ -51,11 +45,13 @@ class WorksRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make(),
-                AttachAction::make(),
+                // AttachAction::make(),
             ])
             ->recordActions([
-                EditAction::make(),
-                DetachAction::make(),
+                ViewAction::make()
+                    ->url(fn ($record) => route('filament.admin.resources.works.edit', ['record' => $record])),
+                // EditAction::make(),
+                // DetachAction::make(),
                 DeleteAction::make(),
             ])
             ->toolbarActions([

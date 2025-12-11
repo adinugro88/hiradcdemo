@@ -18,7 +18,7 @@ class WorkResource extends Resource
 {
     protected static ?string $model = Work::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::Briefcase;
 
     public static function form(Schema $schema): Schema
     {
@@ -33,7 +33,7 @@ class WorkResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\HazardsRelationManager::class,
         ];
     }
 

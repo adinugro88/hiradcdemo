@@ -1,29 +1,37 @@
 <?php
 
-namespace App\Filament\Resources\RiskAssessments\Schemas;
+namespace App\Filament\Resources\Hazards\RelationManagers;
 
-use Filament\Forms\Components\Select;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
-class RiskAssessmentForm
+class RiskAssessmentsRelationManager extends RelationManager
 {
-    public static function configure(Schema $schema): Schema
+    protected static string $relationship = 'riskAssessments';
+
+    protected static ?string $title = 'Risk Assessments';
+
+    public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
                 Section::make('Risk Information')
                     ->schema([
-                        Select::make('hazard_id')
-                            ->relationship('hazard', 'name')
-                            ->required(),
-
                         Textarea::make('description')
-                            ->required(),
+                            ->required()
+                            ->columnSpanFull(),
                     ])
                     ->columnSpanFull(),
 
@@ -108,9 +116,46 @@ class RiskAssessmentForm
             ]);
     }
 
-    /**
-     * Helper menentukan kategori otomatis.
-     */
+    public function table(Table $table): Table
+    {
+        return $table
+            ->recordTitleAttribute('description')
+            ->columns([
+                TextColumn::make('description')
+                    ->limit(50)
+                    ->searchable(),
+                TextColumn::make('total_before')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('category_before')
+                    ->searchable(),
+                TextColumn::make('total_after')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('category_after')
+                    ->searchable(),
+                TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                //
+            ])
+            ->headerActions([
+                CreateAction::make(),
+            ])
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+
     private static function setCategory(int $total, callable $set, string $field): void
     {
         if ($total == 1) {
