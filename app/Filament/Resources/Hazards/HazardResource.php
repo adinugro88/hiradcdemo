@@ -18,9 +18,9 @@ class HazardResource extends Resource
 {
     protected static ?string $model = Hazard::class;
 
-    public static bool $shouldRegisterNavigation = false;
+    // public static bool $shouldRegisterNavigation = false;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::ExclamationCircle;
 
     public static function form(Schema $schema): Schema
     {

@@ -12,6 +12,7 @@ class RiskAssessment extends Model
 
     protected $fillable = [
         'hazard_id',
+        'description',
         'probability_before',
         'severity_before',
         'total_before',
