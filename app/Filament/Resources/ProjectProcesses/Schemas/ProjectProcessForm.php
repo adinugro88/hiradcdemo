@@ -14,9 +14,13 @@ class ProjectProcessForm
             ->components([
                 Select::make('project_id')
                     ->relationship('project', 'name')
+                    ->searchable()
+                    ->preload()
                     ->required(),
                 TextInput::make('process')
-                    ->required(),
+                    ->label('Process Name')
+                    ->required()
+                    ->maxLength(255),
             ]);
     }
 }

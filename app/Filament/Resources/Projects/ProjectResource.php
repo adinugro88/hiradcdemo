@@ -35,7 +35,7 @@ class ProjectResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\ProjectProcessesRelationManager::class,
         ];
     }
 

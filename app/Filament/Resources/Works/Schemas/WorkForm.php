@@ -12,10 +12,15 @@ class WorkForm
         return $schema
             ->components([
                 TextInput::make('number')
+                    ->label('No.')
                     ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->minValue(1),
                 TextInput::make('name')
-                    ->required(),
+                    ->label('Work Name')
+                    ->required()
+                    ->maxLength(255)
+                    ->columnSpanFull(),
             ]);
     }
 }

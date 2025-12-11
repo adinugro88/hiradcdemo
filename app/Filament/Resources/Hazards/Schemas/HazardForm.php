@@ -13,16 +13,25 @@ class HazardForm
     {
         return $schema
             ->components([
-                Select::make('work_id')
-                    ->relationship('work', 'name')
-                    ->required(),
-                TextInput::make('name')
-                    ->required(),
-                Textarea::make('risk_description')
+                Select::make('work_process_id')
+                    ->relationship('workProcess', 'id')
+                    ->searchable()
+                    ->preload()
                     ->required()
+                    ->label('Work Process'),
+                TextInput::make('name')
+                    ->label('Hazard Name')
+                    ->required()
+                    ->maxLength(255),
+                Textarea::make('risk_description')
+                    ->label('Risk Description')
+                    ->required()
+                    ->rows(3)
                     ->columnSpanFull(),
                 Textarea::make('regulations')
+                    ->label('Regulations')
                     ->required()
+                    ->rows(3)
                     ->columnSpanFull(),
             ]);
     }

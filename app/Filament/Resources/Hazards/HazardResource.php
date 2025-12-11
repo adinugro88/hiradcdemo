@@ -33,7 +33,7 @@ class HazardResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\ControlMeasuresRelationManager::class,
         ];
     }
 

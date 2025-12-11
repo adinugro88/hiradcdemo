@@ -12,10 +12,14 @@ class WorkProcessForm
         return $schema
             ->components([
                 Select::make('project_process_id')
-                    ->relationship('projectProcess', 'id')
+                    ->relationship('projectProcess', 'process')
+                    ->searchable()
+                    ->preload()
                     ->required(),
                 Select::make('work_id')
                     ->relationship('work', 'name')
+                    ->searchable()
+                    ->preload()
                     ->required(),
             ]);
     }
