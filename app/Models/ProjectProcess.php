@@ -1,0 +1,42 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class ProjectProcess extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'project_id',
+        'process',
+    ];
+
+    /**
+     * Get the project that owns the process.
+     */
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * Get the work processes for the project process.
+     */
+    public function workProcesses(): HasMany
+    {
+        return $this->hasMany(WorkProcess::class);
+    }
+
+    /**
+     * Get the works through work processes.
+     */
+    public function works()
+    {
+        return $this->belongsToMany(Work::class, 'work_processes');
+    }
+}
