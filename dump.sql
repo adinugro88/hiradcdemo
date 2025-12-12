@@ -1,9 +1,29 @@
+
+
+USE hiradc;
+
+
+-- Nonaktifkan foreign key sementara
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- Kosongkan semua tabel
+TRUNCATE TABLE projects;
+TRUNCATE TABLE project_processes;
+TRUNCATE TABLE works;
+TRUNCATE TABLE hazards;
+TRUNCATE TABLE regulations;
+TRUNCATE TABLE risk_assessments;
+TRUNCATE TABLE control_measures;
+TRUNCATE TABLE work_processes;
+
+-- Aktifkan kembali foreign key
+SET FOREIGN_KEY_CHECKS = 1;
 -- --------------------------------------------------------
 --  PROJECTS
 -- --------------------------------------------------------
 INSERT INTO projects (id, department, name, document_number, form_code, revision, page_info, created_at, updated_at)
 VALUES
-(1, 'OPERATION', 'AMANKILA PROJECT', '0143', 'FM/HSE-1/11', '01', 'Hal: 1 Dari 1', DATETIME('now'), DATETIME('now'));
+(1, 'OPERATION', 'AMANKILA PROJECT', '0143', 'FM/HSE-1/11', '01', 'Hal: 1 Dari 1', NOW(), NOW());
 
 
 -- --------------------------------------------------------
@@ -11,7 +31,7 @@ VALUES
 -- --------------------------------------------------------
 INSERT INTO project_processes (id, project_id, process, created_at, updated_at)
 VALUES
-(1, 1, 'Pekerjaan Kelistrikan Temporary', DATETIME('now'), DATETIME('now'));
+(1, 1, 'Pekerjaan Kelistrikan Temporary', NOW(), NOW());
 
 
 -- --------------------------------------------------------
@@ -19,8 +39,8 @@ VALUES
 -- --------------------------------------------------------
 INSERT INTO works (id, name, description, created_at, updated_at)
 VALUES
-(1, 'Instalasi kabel (wiring installation)', 'Kegiatan instalasi kabel listrik.', DATETIME('now'), DATETIME('now')),
-(2, 'Perbaikan listrik (electricity repair)', 'Kegiatan perbaikan listrik.', DATETIME('now'), DATETIME('now'));
+(1, 'Instalasi kabel (wiring installation)', 'Kegiatan instalasi kabel listrik.', NOW(), NOW()),
+(2, 'Perbaikan listrik (electricity repair)', 'Kegiatan perbaikan listrik.', NOW(), NOW());
 
 
 -- --------------------------------------------------------
@@ -28,8 +48,8 @@ VALUES
 -- --------------------------------------------------------
 INSERT INTO hazards (id, work_id, name, created_at, updated_at)
 VALUES
-(1, 1, 'Tersetrum (electrocuted)', DATETIME('now'), DATETIME('now')),
-(2, 2, 'Tersetrum (electrocuted)', DATETIME('now'), DATETIME('now'));
+(1, 1, 'Tersetrum (electrocuted)', NOW(), NOW()),
+(2, 2, 'Tersetrum (electrocuted)', NOW(), NOW());
 
 
 -- --------------------------------------------------------
@@ -37,8 +57,8 @@ VALUES
 -- --------------------------------------------------------
 INSERT INTO regulations (id, hazard_id, title, reference_number, description, created_at, updated_at)
 VALUES
-(1, 1, 'Permenaker No 12 Tahun 2015', '12/2015', 'Regulasi keselamatan kelistrikan.', DATETIME('now'), DATETIME('now')),
-(2, 2, 'Permenaker No 12 Tahun 2015', '12/2015', 'Regulasi keselamatan kelistrikan.', DATETIME('now'), DATETIME('now'));
+(1, 1, 'Permenaker No 12 Tahun 2015', '12/2015', 'Regulasi keselamatan kelistrikan.', NOW(), NOW()),
+(2, 2, 'Permenaker No 12 Tahun 2015', '12/2015', 'Regulasi keselamatan kelistrikan.', NOW(), NOW());
 
 
 -- --------------------------------------------------------
@@ -55,14 +75,14 @@ INSERT INTO risk_assessments (
     'Risiko tersetrum dapat menyebabkan fatality.',
     3, 5, 15, 'Tinggi',
     2, 2, 4, 'Kecil',
-    DATETIME('now'), DATETIME('now')
+    NOW(), NOW()
 ),
 (
     2, 2,
     'Risiko tersetrum dapat menyebabkan fatality.',
     3, 5, 15, 'Tinggi',
     2, 2, 4, 'Kecil',
-    DATETIME('now'), DATETIME('now')
+    NOW(), NOW()
 );
 
 
@@ -79,7 +99,7 @@ INSERT INTO control_measures (
     'Pelatihan K3 lanjutan.',
     'Implementasi LOTO; APD khusus listrik; Pembuatan Prosedur dan JSA kelistrikan.',
     'Administrative Control, PPE',
-    DATETIME('now'), DATETIME('now')
+    NOW(), NOW()
 ),
 (
     2, 2,
@@ -87,7 +107,7 @@ INSERT INTO control_measures (
     'Pelatihan K3 lanjutan.',
     'Implementasi LOTO; APD khusus listrik; Pembuatan Prosedur dan JSA kelistrikan.',
     'Administrative Control, PPE',
-    DATETIME('now'), DATETIME('now')
+    NOW(), NOW()
 );
 
 -- --------------------------------------------------------
@@ -95,5 +115,5 @@ INSERT INTO control_measures (
 -- --------------------------------------------------------
 INSERT INTO work_processes (id, project_process_id, work_id, created_at, updated_at)
 VALUES
-(1, 1, 1, DATETIME('now'), DATETIME('now')),
-(2, 1, 2, DATETIME('now'), DATETIME('now'));
+(1, 1, 1, NOW(), NOW()),
+(2, 1, 2, NOW(), NOW());
