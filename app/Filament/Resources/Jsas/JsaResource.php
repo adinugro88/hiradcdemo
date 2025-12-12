@@ -1,44 +1,167 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\Jsas;
 
-use App\Filament\Resources\JsaResource\Pages;
-use App\Filament\Resources\JsaResource\RelationManagers;
+use App\Filament\Resources\Jsas\Pages;
 use App\Models\Jsa;
 use Filament\Resources\Resource;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
+
+// Form components
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 
 class JsaResource extends Resource
 {
     protected static ?string $model = Jsa::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::RectangleStack;
-
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
+            ->columns(1)
             ->schema([
-                TextInput::make('job_name')->required(),
-                DatePicker::make('created_date')->required(),
-                Repeater::make('steps')
-                    ->relationship('steps')
+                // INFORMASI PROYEK
+                TextInput::make('project_name')
+                    ->label('Nama Proyek')
+                    ->required()
+                    ->columnSpanFull(),
+
+                Select::make('supervisor_id')
+                    ->label('Dibuat Oleh (Supervisor)')
+                    ->relationship('supervisor', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->columnSpanFull(),
+
+                Select::make('site_manager_id')
+                    ->label('Site Manager')
+                    ->relationship('siteManager', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->columnSpanFull(),
+
+                Select::make('leader_hse_id')
+                    ->label('Leader HSE Proyek')
+                    ->relationship('leaderHse', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->columnSpanFull(),
+
+                Select::make('project_manager_id')
+                    ->label('Project Manager')
+                    ->relationship('projectManager', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->columnSpanFull(),
+
+                DatePicker::make('created_date')
+                    ->label('Tanggal Pembuatan')
+                    ->required()
+                    ->columnSpanFull(),
+
+                // NAMA PEKERJAAN
+                Select::make('work_id')
+                    ->label('Nama Pekerjaan')
+                    ->options(\App\Models\Work::pluck('name', 'id'))
+                    ->searchable()
+                    ->live()
+                    ->afterStateUpdated(fn ($set) => $set('selected_hazards', []))
+                    ->columnSpanFull(),
+
+                // HAZARD CHECKLIST
+                CheckboxList::make('selected_hazards')
+                    ->label('Daftar Hazard')
+                    ->options(function ($get) {
+                        if (!$get('work_id')) return [];
+                        return \App\Models\Hazard::where('work_id', $get('work_id'))
+                            ->pluck('name', 'id')
+                            ->toArray();
+                    })
+                    ->columns(1)
+                    ->live()
+                    ->afterStateUpdated(function ($state, $set) {
+                        $items = [];
+
+                        if ($state) {
+                            // ✅ GUNAKAN NAMA RELASI YANG BENAR (plural)
+                            $hazards = \App\Models\Hazard::with([
+                                'riskAssessments',
+                                'controlMeasures',
+                                'regulations'
+                            ])->findMany($state);
+
+                            foreach ($hazards as $hazard) {
+                                // ✅ AMBIL ENTRI PERTAMA DARI KOLEKSI
+                                $risk = $hazard->riskAssessments->first();
+                                $control = $hazard->controlMeasures->first();
+                                $regulation = $hazard->regulations->first();
+
+                                $items[] = [
+                                    'hazard_id' => $hazard->id,
+                                    'hazard' => ['name' => $hazard->name],
+                                    'risk' => [
+                                        'description' => $risk?->description,
+                                    ],
+                                    'control' => [
+                                        'basic_measure' => $control?->basic_measure,
+                                        'opportunity_measure' => $control?->opportunity_measure,
+                                    ],
+                                    'regulation' => [
+                                        'title' => $regulation?->title,
+                                        'reference_number' => $regulation?->reference_number,
+                                        'description' => $regulation?->description,
+                                    ],
+                                ];
+                            }
+                        }
+
+                        $set('hazard_details', $items);
+                    })
+                    ->columnSpanFull(),
+
+                // DETAIL HAZARD
+                Repeater::make('hazard_details')
+                    ->label('Detail Hazard Terpilih')
                     ->schema([
-                        Textarea::make('work_sequence')->columnSpanFull(),
-                        Textarea::make('risk_analysis')->rows(3)->columnSpanFull(),
-                        Textarea::make('risk_control')->rows(3)->columnSpanFull(),
-                        TextInput::make('pic'),
-                        DatePicker::make('target_date'),
+                        Hidden::make('hazard_id'),
+
+                        Placeholder::make('hazard_name_display')
+                            ->label('Hazard')
+                            ->content(fn ($get) => $get('hazard.name') ?? '-')
+                            ->columnSpanFull(),
+
+                        CheckboxList::make('confirmed_sections')
+                            ->label('Poin-Poin yang Harus Dikonfirmasi')
+                            ->options(function ($get) {
+                                return [
+                                    'risk' => 'Risk Assessment: ' . ($get('risk.description') ?: 'Tidak ada deskripsi risiko.'),
+                                    'regulation' => 'Regulation: ' . (
+                                        ($get('regulation.title') ?: 'Tanpa judul') .
+                                        ' (' . ($get('regulation.reference_number') ?: 'Tanpa nomor') . ') - ' .
+                                        ($get('regulation.description') ?: 'Tidak ada deskripsi.')
+                                    ),
+                                    'control' => 'Control Measure: ' . ($get('control.basic_measure') ?: 'Tidak ada control measure.'),
+                                    'opportunity' => 'Opportunity: ' . ($get('control.opportunity_measure') ?: 'Tidak ada opportunity measure.'),
+                                ];
+                            })
+                            ->columns(1)
+                            ->required()
+                            ->columnSpanFull(),
                     ])
-                    ->columnSpanFull()
-                    ->collapsible()
-                    ->collapsed()
-                    ->addActionLabel('Tambah Langkah'),
+                    ->addable(false)
+                    ->deletable(false)
+                    ->cloneable(false)
+                    ->defaultItems(0)
+                    ->hiddenLabel()
+                    ->visible(fn ($get) => count($get('selected_hazards') ?? []) > 0)
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -46,22 +169,21 @@ class JsaResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('project.name')->label('Proyek'),
-                TextColumn::make('job_name')->label('Pekerjaan'),
-                TextColumn::make('created_date')->date(),
+                TextColumn::make('project_name')->label('Nama Proyek'),
+                TextColumn::make('work.name')->label('Nama Pekerjaan'),
+                TextColumn::make('created_date')->label('Tanggal Pembuatan')->date(),
                 TextColumn::make('steps_count')
-                    ->getStateUsing(fn ($record) => $record->steps()->count())
-                    ->label('Jumlah Langkah'),
-            ])
-            ->filters([]);
+                    ->label('Jumlah Langkah')
+                    ->getStateUsing(fn ($record) => $record->steps()->count()),
+            ]);
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListJsas::route('/'),
+            'index'  => Pages\ListJsas::route('/'),
             'create' => Pages\CreateJsa::route('/create'),
-            'edit' => Pages\EditJsa::route('/{record}/edit'),
+            'edit'   => Pages\EditJsa::route('/{record}/edit'),
         ];
     }
 }

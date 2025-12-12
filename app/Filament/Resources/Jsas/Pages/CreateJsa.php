@@ -1,122 +1,52 @@
 <?php
 
-namespace App\Filament\Resources\JsaResource\Pages;
+namespace App\Filament\Resources\Jsas\Pages;
 
-use App\Filament\Resources\JsaResource;
-use App\Models\Project;
-use App\Models\Work;
-use App\Models\Hazard;
+use App\Filament\Resources\Jsas\JsaResource;
 use Filament\Resources\Pages\CreateRecord;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Form;
+use Illuminate\Database\Eloquent\Model;   // <-- WAJIB, inilah penyebab error barusan!
+use App\Models\Jsa;
+use App\Models\JsaStep;
+use App\Models\Work;
+use Illuminate\Support\Facades\DB;
 
 class CreateJsa extends CreateRecord
 {
     protected static string $resource = JsaResource::class;
 
-    public function form(Form $form): Form
+    protected function handleRecordCreation(array $data): Model
     {
-        return $form
-            ->schema([
-                Select::make('project_id')
-                    ->label('Nama Proyek')
-                    ->options(Project::pluck('name', 'id'))
-                    ->required()
-                    ->searchable()
-                    ->live(),
-
-                Select::make('work_id')
-                    ->label('Pilih Pekerjaan')
-                    ->options(function (callable $get) {
-                        $projectId = $get('project_id');
-                        if (!$projectId) return [];
-                        return Work::whereHas('projectProcesses', function ($q) use ($projectId) {
-                            $q->where('project_id', $projectId);
-                        })->pluck('name', 'id');
-                    })
-                    ->required()
-                    ->live()
-                    ->afterStateUpdated(fn (callable $set) => $set('selected_hazard_ids', [])),
-
-                CheckboxList::make('selected_hazard_ids')
-                    ->label('Pilih Hazard yang Ingin Dimasukkan ke JSA')
-                    ->options(function (callable $get) {
-                        $workId = $get('work_id');
-                        if (!$workId) return [];
-                        return Hazard::where('work_id', $workId)
-                            ->pluck('name', 'id')
-                            ->toArray();
-                    })
-                    ->columns(2)
-                    ->live(),
-
-                Fieldset::make('Preview JSA Steps')
-                    ->schema([
-                        Repeater::make('preview')
-                            ->schema([
-                                Textarea::make('work_sequence')->disabled(),
-                                Textarea::make('risk_analysis')->disabled()->rows(2),
-                                Textarea::make('risk_control')->disabled()->rows(2),
-                            ])
-                            ->addable(false)
-                            ->deletable(false)
-                            ->columnSpanFull(),
-                    ])
-                    ->visible(fn (callable $get) => !empty($get('selected_hazard_ids'))),
-
-                DatePicker::make('created_date')
-                    ->label('Tanggal Pembuatan')
-                    ->required()
-                    ->default(now()),
-            ]);
-    }
-
-    protected function mutateFormDataBeforeCreate(array $data): array
-    {
-        $workId = $data['work_id'];
-        $selectedHazardIds = $data['selected_hazard_ids'] ?? [];
-
-        $work = Work::find($workId);
-        if (!$work) return $data;
-
-        // Buat JSA utama
-        $jsa = \App\Models\Jsa::create([
-            'project_id' => $data['project_id'],
-            'job_name' => $work->name,
+        // Buat JSA
+        $jsa = Jsa::create([
+            'project_id'   => $data['project_id'],
+            'job_id'       => $data['job_id'],
+            'job_name'     => Work::find($data['job_id'])->name,
             'created_date' => $data['created_date'],
         ]);
 
-        // Buat steps berdasarkan hazard yang dipilih
-        foreach ($selectedHazardIds as $i => $hazardId) {
-            $hazard = Hazard::with(['riskAssessments', 'controlMeasures'])->find($hazardId);
-            if (!$hazard) continue;
+        $hazards = $data['selected_hiradc_items'] ?? [];
 
-            $ra = $hazard->riskAssessments->first();
-            $cm = $hazard->controlMeasures;
+        foreach ($hazards as $i => $hazardId) {
+            $haz = DB::table('hazards as h')
+                ->leftJoin('risk_assessments as ra', 'h.id', '=', 'ra.hazard_id')
+                ->leftJoin('control_measures as cm', 'h.id', '=', 'cm.hazard_id')
+                ->where('h.id', $hazardId)
+                ->select(
+                    'h.name as hazard',
+                    'ra.description as risk',
+                    'cm.basic_measure as control'
+                )
+                ->first();
 
-            $riskAnalysis = "{$hazard->name}: {$ra?->description}\n";
-            $riskAnalysis .= "(Prob: {$ra?->probability_before}, Sev: {$ra?->severity_before}, Total: {$ra?->total_before}, Kategori: {$ra?->category_before})";
-
-            $riskControl = "Basic: {$cm?->basic_measure}\n";
-            $riskControl .= "Opportunity: {$cm?->opportunity_measure}\n";
-            $riskControl .= "Advanced: {$cm?->advanced_measure}";
-
-            \App\Models\JsaStep::create([
-                'jsa_id' => $jsa->id,
-                'step_number' => $i + 1,
-                'work_sequence' => $work->name,
-                'risk_analysis' => trim($riskAnalysis),
-                'risk_control' => trim($riskControl),
-                'pic' => null,
-                'target_date' => null,
+            JsaStep::create([
+                'jsa_id'        => $jsa->id,
+                'step_number'   => $i + 1,
+                'work_sequence' => $haz->hazard,
+                'risk_analysis' => $haz->risk ?? '-',
+                'risk_control'  => $haz->control ?? '-',
             ]);
         }
 
-        return ['id' => $jsa->id];
+        return $jsa;
     }
 }
