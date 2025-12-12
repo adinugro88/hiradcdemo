@@ -20,6 +20,8 @@ class HazardResource extends Resource
 
     // public static bool $shouldRegisterNavigation = false;
 
+    protected static ?int $navigationSort = 2;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::ExclamationCircle;
 
     public static function form(Schema $schema): Schema
