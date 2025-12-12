@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('project_employee_roles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('employee_id')->constrained()->cascadeOnDelete();
 
             $table->enum('role', [
                 'dibuat',

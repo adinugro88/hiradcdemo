@@ -26,4 +26,12 @@ class Project extends Model
     {
         return $this->hasMany(ProjectProcess::class);
     }
+
+    /**
+     * Get the employee roles attached to the project.
+     */
+    public function projectEmployeeRoles(): HasMany
+    {
+        return $this->hasMany(ProjectEmployeeRole::class);
+    }
 }

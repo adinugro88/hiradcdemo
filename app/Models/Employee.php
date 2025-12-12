@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Employee extends Model
 {
@@ -10,4 +11,12 @@ class Employee extends Model
         'name',
         'position',
     ];
+
+    /**
+     * Get project roles associated with the employee.
+     */
+    public function projectEmployeeRoles(): HasMany
+    {
+        return $this->hasMany(ProjectEmployeeRole::class);
+    }
 }
