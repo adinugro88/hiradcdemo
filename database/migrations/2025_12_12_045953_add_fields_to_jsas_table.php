@@ -20,7 +20,8 @@ return new class extends Migration
             if (!Schema::hasColumn('jsas', 'work_id')) {
                 $table->foreignId('work_id')
                     ->nullable()
-                    ->constrained()
+                    ->references('id')
+                    ->on('project_processes')
                     ->nullOnDelete()
                     ->after('project_name');
             }

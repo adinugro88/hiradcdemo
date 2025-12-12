@@ -16,36 +16,52 @@ class CreateJsa extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
+        // Ambil nama pekerjaan
         $work = Work::findOrFail($data['work_id']);
 
+        // 1. Simpan JSA utama
         $jsa = Jsa::create([
-            'project_name' => $data['project_name'], // ✅ WAJIB
+            'project_name' => $data['project_name'],
             'project_id'   => $data['project_id'],
-            'job_id'       => $data['work_id'],       // atau work_id sesuai tabel
+            'job_id'       => $data['work_id'],
             'job_name'     => $work->name,
             'created_date' => $data['created_date'],
         ]);
 
-        $hazards = $data['selected_hiradc_items'] ?? [];
+        // 2. Ambil data hazard_details dari form
+        $hazards = $data['hazard_details'] ?? [];
 
-        foreach ($hazards as $i => $hazardId) {
-            $haz = DB::table('hazards as h')
-                ->leftJoin('risk_assessments as ra', 'h.id', '=', 'ra.hazard_id')
-                ->leftJoin('control_measures as cm', 'h.id', '=', 'cm.hazard_id')
-                ->where('h.id', $hazardId)
-                ->select(
-                    'h.name as hazard',
-                    'ra.description as risk',
-                    'cm.basic_measure as control'
-                )
-                ->first();
+        foreach ($hazards as $i => $h) {
 
+            // -------------- AMBIL DATA --------------
+            $hazardName = $h['hazard']['name'] ?? '-';
+
+            // Risk Analysis (digabung)
+            $riskText = collect($h['risks'] ?? [])
+                ->pluck('description')
+                ->filter()
+                ->implode("; ");
+
+            // Control Measures (digabung)
+            $controlText = collect($h['controls'] ?? [])
+                ->map(function ($c) {
+                    $basic = $c['basic_measure'] ?? '';
+                    $adv = $c['advanced_measure'] ?? '';
+
+                    return $adv
+                        ? "$basic (Advanced: $adv)"
+                        : $basic;
+                })
+                ->filter()
+                ->implode("; ");
+
+            // -------------- SIMPAN STEP --------------
             JsaStep::create([
                 'jsa_id'        => $jsa->id,
                 'step_number'   => $i + 1,
-                'work_sequence' => $haz->hazard,
-                'risk_analysis' => $haz->risk ?? '-',
-                'risk_control'  => $haz->control ?? '-',
+                'work_sequence' => $hazardName,
+                'risk_analysis' => $riskText ?: '-',
+                'risk_control'  => $controlText ?: '-',
             ]);
         }
 

@@ -4,6 +4,8 @@ namespace App\Filament\Resources\Jsas;
 
 use App\Filament\Resources\Jsas\Pages;
 use App\Models\Jsa;
+use App\Models\Work;
+use App\Models\WorkProcess;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -80,18 +82,62 @@ class JsaResource extends Resource
                 // NAMA PEKERJAAN
                 Select::make('work_id')
                     ->label('Nama Pekerjaan')
-                    ->options(\App\Models\Work::pluck('name', 'id'))
+                    ->options(\App\Models\ProjectProcess::pluck('process', 'id'))
                     ->searchable()
                     ->live()
-                    ->afterStateUpdated(fn($set) => $set('selected_hazards', []))
+                    ->afterStateUpdated(fn($set) => $set('work_sequence', []))
+                    ->columnSpanFull(),
+
+                // NAMA PEKERJAAN
+                Repeater::make('work_sequence')
+                    ->label('Urutan Pekerjaan')
+                    ->schema([
+                        Select::make('work_id')
+                            ->label('Pekerjaan')
+                            ->options(function ($get) {
+                                $projectProcessId = $get('../../work_id');
+
+                                if (! $projectProcessId) return [];
+
+                                $workIds = \App\Models\WorkProcess::where('project_process_id', $projectProcessId)
+                                    ->pluck('work_id')
+                                    ->unique()
+                                    ->values();
+
+                                return \App\Models\Work::whereIn('id', $workIds)
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id')
+                                    ->toArray();
+                            })
+                            ->searchable()
+                            ->required(),
+                    ])
+                    ->reorderable(true)
+                    ->live()
+                    ->afterStateUpdated(function ($state, $set) {
+                        // $state = array item repeater
+                        $set('selected_hazards', []);
+                        $set('hazard_details', []);
+                    })
                     ->columnSpanFull(),
 
                 // HAZARD CHECKLIST
                 CheckboxList::make('selected_hazards')
                     ->label('Daftar Hazard')
                     ->options(function ($get) {
-                        if (!$get('work_id')) return [];
-                        return \App\Models\Hazard::where('work_id', $get('work_id'))
+                        $sequence = $get('work_sequence') ?? [];
+
+                        $workIds = collect($sequence)
+                            ->pluck('work_id')
+                            ->filter()
+                            ->unique()
+                            ->values()
+                            ->all();
+
+                        if (empty($workIds)) return [];
+
+                        return \App\Models\Hazard::whereIn('work_id', $workIds)
+                            ->orderBy('name')
                             ->pluck('name', 'id')
                             ->toArray();
                     })
@@ -112,7 +158,9 @@ class JsaResource extends Resource
                                     'hazard_id' => $hazard->id,
                                     'hazard' => ['name' => $hazard->name],
 
-                                    // ✅ MULTI
+                                    // (optional tapi berguna biar tau hazard ini dari work mana)
+                                    'work_id' => $hazard->work_id,
+
                                     'risks' => $hazard->riskAssessments
                                         ->map(fn($r) => [
                                             'id' => $r->id,
