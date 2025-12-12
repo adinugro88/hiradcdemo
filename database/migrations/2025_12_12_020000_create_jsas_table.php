@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('jsas', function (Blueprint $table) {
             $table->id();
-        $table->foreignId('project_id')->constrained()->onDelete('cascade');
-        $table->string('job_name'); // Nama Pekerjaan (input manual)
-        $table->date('created_date');
-        $table->timestamps();
+            $table->foreignId('project_id')->constrained()->onDelete('cascade');
+            $table->string('job_name'); // Nama Pekerjaan (input manual)
+            $table->date('created_date');
+            $table->timestamps();
         });
     }
 

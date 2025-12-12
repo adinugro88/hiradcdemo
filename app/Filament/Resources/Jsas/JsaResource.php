@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Jsas;
 
 use App\Filament\Resources\Jsas\Pages;
 use App\Models\Jsa;
+use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
@@ -17,10 +18,13 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Support\Icons\Heroicon;
 
 class JsaResource extends Resource
 {
     protected static ?string $model = Jsa::class;
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentText;
 
     public static function form(Schema $schema): Schema
     {
@@ -31,6 +35,13 @@ class JsaResource extends Resource
                 TextInput::make('project_name')
                     ->label('Nama Proyek')
                     ->required()
+                    ->columnSpanFull(),
+
+                Select::make('project_id')
+                    ->label('Proyek')
+                    ->relationship('project', 'name')
+                    ->searchable()
+                    ->preload()
                     ->columnSpanFull(),
 
                 Select::make('supervisor_id')
@@ -118,6 +129,7 @@ class JsaResource extends Resource
                                         'reference_number' => $regulation?->reference_number,
                                         'description' => $regulation?->description,
                                     ],
+                                    'confirmed_sections' => [],
                                 ];
                             }
                         }
@@ -151,6 +163,7 @@ class JsaResource extends Resource
                                     'opportunity' => 'Opportunity: ' . ($get('control.opportunity_measure') ?: 'Tidak ada opportunity measure.'),
                                 ];
                             })
+                            ->default([])
                             ->columns(1)
                             ->required()
                             ->columnSpanFull(),
