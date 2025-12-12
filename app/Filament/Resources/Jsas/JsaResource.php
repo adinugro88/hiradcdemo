@@ -83,7 +83,7 @@ class JsaResource extends Resource
                     ->options(\App\Models\Work::pluck('name', 'id'))
                     ->searchable()
                     ->live()
-                    ->afterStateUpdated(fn ($set) => $set('selected_hazards', []))
+                    ->afterStateUpdated(fn($set) => $set('selected_hazards', []))
                     ->columnSpanFull(),
 
                 // HAZARD CHECKLIST
@@ -101,7 +101,6 @@ class JsaResource extends Resource
                         $items = [];
 
                         if ($state) {
-                            // ✅ GUNAKAN NAMA RELASI YANG BENAR (plural)
                             $hazards = \App\Models\Hazard::with([
                                 'riskAssessments',
                                 'controlMeasures',
@@ -109,26 +108,32 @@ class JsaResource extends Resource
                             ])->findMany($state);
 
                             foreach ($hazards as $hazard) {
-                                // ✅ AMBIL ENTRI PERTAMA DARI KOLEKSI
-                                $risk = $hazard->riskAssessments->first();
-                                $control = $hazard->controlMeasures->first();
-                                $regulation = $hazard->regulations->first();
-
                                 $items[] = [
                                     'hazard_id' => $hazard->id,
                                     'hazard' => ['name' => $hazard->name],
-                                    'risk' => [
-                                        'description' => $risk?->description,
-                                    ],
-                                    'control' => [
-                                        'basic_measure' => $control?->basic_measure,
-                                        'opportunity_measure' => $control?->opportunity_measure,
-                                    ],
-                                    'regulation' => [
-                                        'title' => $regulation?->title,
-                                        'reference_number' => $regulation?->reference_number,
-                                        'description' => $regulation?->description,
-                                    ],
+
+                                    // ✅ MULTI
+                                    'risks' => $hazard->riskAssessments
+                                        ->map(fn($r) => [
+                                            'id' => $r->id,
+                                            'description' => $r->description,
+                                        ])->values()->toArray(),
+
+                                    'regulations' => $hazard->regulations
+                                        ->map(fn($r) => [
+                                            'id' => $r->id,
+                                            'title' => $r->title,
+                                            'reference_number' => $r->reference_number,
+                                            'description' => $r->description,
+                                        ])->values()->toArray(),
+
+                                    'controls' => $hazard->controlMeasures
+                                        ->map(fn($c) => [
+                                            'id' => $c->id,
+                                            'basic_measure' => $c->basic_measure,
+                                            'advanced_measure' => $c->advanced_measure,
+                                        ])->values()->toArray(),
+
                                     'confirmed_sections' => [],
                                 ];
                             }
@@ -146,34 +151,51 @@ class JsaResource extends Resource
 
                         Placeholder::make('hazard_name_display')
                             ->label('Hazard')
-                            ->content(fn ($get) => $get('hazard.name') ?? '-')
+                            ->content(fn($get) => $get('hazard.name') ?? '-')
                             ->columnSpanFull(),
 
                         CheckboxList::make('confirmed_sections')
                             ->label('Poin-Poin yang Harus Dikonfirmasi')
                             ->options(function ($get) {
-                                return [
-                                    'risk' => 'Risk Assessment: ' . ($get('risk.description') ?: 'Tidak ada deskripsi risiko.'),
-                                    'regulation' => 'Regulation: ' . (
-                                        ($get('regulation.title') ?: 'Tanpa judul') .
-                                        ' (' . ($get('regulation.reference_number') ?: 'Tanpa nomor') . ') - ' .
-                                        ($get('regulation.description') ?: 'Tidak ada deskripsi.')
-                                    ),
-                                    'control' => 'Control Measure: ' . ($get('control.basic_measure') ?: 'Tidak ada control measure.'),
-                                    'opportunity' => 'Opportunity: ' . ($get('control.opportunity_measure') ?: 'Tidak ada opportunity measure.'),
-                                ];
+                                $options = [];
+
+                                foreach (($get('risks') ?? []) as $risk) {
+                                    $options["risk_{$risk['id']}"] =
+                                        "Risk Assessment: " . ($risk['description'] ?: '-');
+                                }
+
+                                foreach (($get('regulations') ?? []) as $reg) {
+                                    $options["regulation_{$reg['id']}"] =
+                                        "Regulation: " .
+                                        ($reg['title'] ?: 'Tanpa judul') .
+                                        " (" . ($reg['reference_number'] ?: 'Tanpa nomor') . ") - " .
+                                        ($reg['description'] ?: 'Tidak ada deskripsi.');
+                                }
+
+                                foreach (($get('controls') ?? []) as $control) {
+                                    $label = "Control Measure: " . ($control['basic_measure'] ?: '-');
+                                    if (!empty($control['advanced_measure'])) {
+                                        $label .= " | Advanced: {$control['advanced_measure']}";
+                                    }
+                                    $options["control_{$control['id']}"] = $label;
+                                }
+
+                                // optional kalau mau opportunity ditarik dari controlMeasures->opportunity relasi
+                                // (kalau ada relasinya)
+
+                                return $options;
                             })
-                            ->default([])
                             ->columns(1)
                             ->required()
                             ->columnSpanFull(),
+
                     ])
                     ->addable(false)
                     ->deletable(false)
                     ->cloneable(false)
                     ->defaultItems(0)
                     ->hiddenLabel()
-                    ->visible(fn ($get) => count($get('selected_hazards') ?? []) > 0)
+                    ->visible(fn($get) => count($get('selected_hazards') ?? []) > 0)
                     ->columnSpanFull(),
             ]);
     }
@@ -187,7 +209,7 @@ class JsaResource extends Resource
                 TextColumn::make('created_date')->label('Tanggal Pembuatan')->date(),
                 TextColumn::make('steps_count')
                     ->label('Jumlah Langkah')
-                    ->getStateUsing(fn ($record) => $record->steps()->count()),
+                    ->getStateUsing(fn($record) => $record->steps()->count()),
             ]);
     }
 

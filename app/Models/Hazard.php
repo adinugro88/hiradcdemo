@@ -20,6 +20,7 @@ class Hazard extends Model
         'name',
         'risk_description',
         'regulations',
+        'control_hierarchy',
     ];
 
     /**

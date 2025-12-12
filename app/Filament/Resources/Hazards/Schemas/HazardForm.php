@@ -23,6 +23,7 @@ class HazardForm
                     ->label('Hazard Name')
                     ->required()
                     ->maxLength(255),
+                
                 // Textarea::make('risk_description')
                 //     ->label('Risk Description')
                 //     ->required()

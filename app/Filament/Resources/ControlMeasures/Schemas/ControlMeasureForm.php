@@ -19,12 +19,8 @@ class ControlMeasureForm
                     ->required()
                     ->columnSpanFull(),
                 Textarea::make('opportunity_measure')
-                    ->required()
                     ->columnSpanFull(),
                 Textarea::make('advanced_measure')
-                    ->columnSpanFull(),
-                Textarea::make('control_hierarchy')
-                    ->required()
                     ->columnSpanFull(),
             ]);
     }

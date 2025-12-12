@@ -16,11 +16,13 @@ class CreateJsa extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
-        // Buat JSA
+        $work = Work::findOrFail($data['work_id']);
+
         $jsa = Jsa::create([
+            'project_name' => $data['project_name'], // ✅ WAJIB
             'project_id'   => $data['project_id'],
-            'job_id'       => $data['job_id'],
-            'job_name'     => Work::find($data['job_id'])->name,
+            'job_id'       => $data['work_id'],       // atau work_id sesuai tabel
+            'job_name'     => $work->name,
             'created_date' => $data['created_date'],
         ]);
 

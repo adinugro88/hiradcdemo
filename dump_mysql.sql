@@ -28,10 +28,10 @@ VALUES
 -- --------------------------------------------------------
 --  HAZARDS
 -- --------------------------------------------------------
-INSERT INTO hazards (id, work_id, name, created_at, updated_at)
+INSERT INTO hazards (id, work_id, name, control_hierarchy, created_at, updated_at)
 VALUES
-(1, 1, 'Tersetrum (electrocuted)', NOW(), NOW()),
-(2, 2, 'Tersetrum (electrocuted)', NOW(), NOW());
+(1, 1, 'Tersetrum (electrocuted)', 'Administrative control, PPE', NOW(), NOW()),
+(2, 2, 'Tersetrum (electrocuted)', 'Administrative control, PPE', NOW(), NOW());
 
 
 -- --------------------------------------------------------
@@ -68,32 +68,21 @@ VALUES
     NOW(), NOW()
 );
 
-
--- --------------------------------------------------------
---  CONTROL MEASURES
--- --------------------------------------------------------
-INSERT INTO control_measures (
-    id, hazard_id, basic_measure, opportunity_measure, advanced_measure, control_hierarchy,
-    created_at, updated_at
-)
+INSERT INTO opportunities (id, name, description, created_at, updated_at)
 VALUES
-(
-    1, 1,
-    'Teknisi bersertifikat; Pelatihan K3 kelistrikan; Penggunaan APD khusus listrik.',
-    'Pelatihan K3 lanjutan.',
-    'Implementasi LOTO; APD khusus listrik; Pembuatan Prosedur dan JSA kelistrikan.',
-    'Administrative Control, PPE',
-    NOW(), NOW()
-),
-(
-    2, 2,
-    'Teknisi bersertifikat; Pelatihan K3 kelistrikan; Penggunaan APD khusus listrik.',
-    'Pelatihan K3 lanjutan.',
-    'Implementasi LOTO; APD khusus listrik; Pembuatan Prosedur dan JSA kelistrikan.',
-    'Administrative Control, PPE',
-    NOW(), NOW()
-);
+(1, 'Pelatihan K3 Listrik Lanjutan', 'Pelatihan lanjutan untuk meningkatkan kesadaran dan keterampilan K3 listrik.', NOW(), NOW());
 
+
+INSERT INTO control_measures (id, hazard_id, basic_measure, opportunity_id, advanced_measure, created_at, updated_at)
+VALUES
+(1, 1, 'Teknisi bersertifikat', 1, NULL, NOW(), NOW()),
+(2, 1, 'Pelatihan K3 kelistrikan', 1, NULL, NOW(), NOW()),
+(3, 1, 'Penggunaan APD khusus listrik.', 1, NULL, NOW(), NOW()),
+(4, 1, 'Implementasi LOTO', NULL, 'Pembuatan Prosedur dan JSA kelistrikan.', NOW(), NOW()),
+(5, 2, 'Teknisi bersertifikat', 1, NULL, NOW(), NOW()),
+(6, 2, 'Pelatihan K3 kelistrikan', 1, NULL, NOW(), NOW()),
+(7, 2, 'Penggunaan APD khusus listrik.', 1, NULL, NOW(), NOW()),
+(8, 2, 'Implementasi LOTO', NULL, 'Pembuatan Prosedur dan JSA kelistrikan.', NOW(), NOW());
 
 -- --------------------------------------------------------
 --  WORK PROCESSES

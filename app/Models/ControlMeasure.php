@@ -12,10 +12,11 @@ class ControlMeasure extends Model
 
     protected $fillable = [
         'hazard_id',
+        'opportunity_id',
         'basic_measure',
         'opportunity_measure',
         'advanced_measure',
-        'control_hierarchy',
+        // 'control_hierarchy',
     ];
 
     /**
@@ -24,5 +25,13 @@ class ControlMeasure extends Model
     public function hazard(): BelongsTo
     {
         return $this->belongsTo(Hazard::class);
+    }
+
+    /**
+     * Get the opportunity that owns the control measure.
+     */
+    public function opportunity(): BelongsTo
+    {
+        return $this->belongsTo(Opportunity::class);
     }
 }

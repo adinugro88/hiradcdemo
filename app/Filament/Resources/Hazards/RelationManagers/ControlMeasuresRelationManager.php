@@ -11,6 +11,7 @@ use Filament\Actions\DissociateAction;
 use Filament\Actions\DissociateBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -26,15 +27,22 @@ class ControlMeasuresRelationManager extends RelationManager
         return $schema
             ->components([
                 Textarea::make('basic_measure')
-                    ->required()
-                    ->columnSpanFull(),
-                Textarea::make('opportunity_measure')
-                    ->required()
-                    ->columnSpanFull(),
+                ->required()
+                ->columnSpanFull(),
                 Textarea::make('advanced_measure')
-                    ->columnSpanFull(),
-                Textarea::make('control_hierarchy')
-                    ->required()
+                ->columnSpanFull(),
+                Select::make('opportunity_id')
+                    ->relationship('opportunity', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->createOptionForm([
+                        \Filament\Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        Textarea::make('description')
+                            ->columnSpanFull(),
+                    ])
+                    ->nullable()
                     ->columnSpanFull(),
             ]);
     }
@@ -45,12 +53,16 @@ class ControlMeasuresRelationManager extends RelationManager
             ->recordTitleAttribute('basic_measure')
             ->columns([
                 TextColumn::make('basic_measure')
-                    ->limit(50)
-                    ->searchable(),
-                TextColumn::make('control_hierarchy')
-                    ->limit(30)
-                    ->searchable(),
-            ])
+                ->limit(50)
+                ->searchable(),
+                TextColumn::make('advanced_measure')
+                ->limit(50)
+                ->searchable(),
+                TextColumn::make('opportunity.name')
+                    ->label('Opportunity')
+                    ->searchable()
+                    ->sortable(),
+                ])
             ->filters([
                 //
             ])
