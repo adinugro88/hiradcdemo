@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Users\Schemas;
 
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
 use Filament\Schemas\Schema;
 
 class UserForm
@@ -14,15 +15,32 @@ class UserForm
             ->components([
                 TextInput::make('name')
                     ->required(),
-                TextInput::make('position')
-                    ->default(null),
-                TextInput::make('department')
-                    ->default(null),
+
+                Select::make('position_id')
+                    ->label('Position')
+                    ->relationship(
+                        name: 'position',      // method relasi di model User
+                        titleAttribute: 'name' // kolom yang ditampilkan di tabel positions
+                    )
+                    ->searchable()
+                    ->preload()
+                    ->required(),            // ubah ke nullable() kalau tidak wajib
+
+                Select::make('department_id')
+                    ->label('Department')
+                    ->relationship(
+                        name: 'department',   // method relasi di model User
+                        titleAttribute: 'name'
+                    )
+                    ->searchable()
+                    ->preload()
+                    ->required(),
+
                 TextInput::make('email')
                     ->label('Email address')
                     ->email()
                     ->required(),
-                DateTimePicker::make('email_verified_at'),
+
                 TextInput::make('password')
                     ->password()
                     ->required(),

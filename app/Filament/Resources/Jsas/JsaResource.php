@@ -26,6 +26,8 @@ class JsaResource extends Resource
 {
     protected static ?string $model = Jsa::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentText;
 
     public static function form(Schema $schema): Schema

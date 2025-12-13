@@ -33,6 +33,15 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            if (is_null($user->email_verified_at)) {
+                $user->email_verified_at = now();
+            }
+        });
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -44,5 +53,16 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function position()
+    {
+        return $this->belongsTo(Position::class);
     }
 }
