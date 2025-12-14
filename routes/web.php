@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    redirect ('/admin/login');
 });
 // JSA PDF export route
 use App\Http\Controllers\JsaPdfController;
