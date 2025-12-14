@@ -2,160 +2,328 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Pages\Page;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Support\Icons\Heroicon;
-use BackedEnum;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
+use App\Models\Jsa;
+use App\Models\JsaStep;
+use App\Models\ProjectProcess;
+use App\Models\User;
+use App\Models\Work;
+use App\Models\WorkProcess;
+use App\Models\Hazard;
+use App\Models\RiskAssessment;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
-
-use Filament\Schemas\Components\Grid;
-
-
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\DB;
 
 class JsaFormPage extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected string $view = 'filament.pages.jsa-form-page';
+    protected static ?string $title = 'Form JSA';
+    protected static ?string $slug = 'jsa/form';
+    protected static bool $shouldRegisterNavigation = false;
 
-    protected static ?string $title = 'JSA';
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentText;
+    protected string $view = 'filament.pages.jsa-form-page';
 
     public array $data = [];
 
-   /** ================= FORM SCHEMA ================= */
+    public function mount(): void
+    {
+        $this->form->fill($this->data);
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema
             ->statePath('data')
             ->schema([
-
-                /** ===== HEADER JSA ===== */
-                Section::make('Informasi JSA')
+                // ===== HEADER DALAM CARD PUTIH
+                Section::make()
                     ->schema([
-                        Grid::make(3)
-                            ->schema([
-                                Forms\Components\TextInput::make('project_name')
-                                    ->label('Nama Proyek')
-                                    ->required(),
+                        TextInput::make('project_name')
+                            ->label('Nama Proyek')
+                            ->required()
+                            ->columnSpan(1),
 
-                                Forms\Components\DatePicker::make('created_date')
-                                    ->label('Tanggal Pembuatan')
-                                    ->required(),
+                        TextInput::make('job_name')
+                            ->label('Nama Pekerjaan')
+                            ->required()
+                            ->columnSpan(1),
 
-                                Forms\Components\TextInput::make('job_name')
-                                    ->label('Nama Pekerjaan')
-                                    ->required(),
-                            ]),
+                        DatePicker::make('created_date')
+                            ->label('Tanggal Pembuatan')
+                            ->required()
+                            ->columnSpan(1),
 
-                        Grid::make(2)
-                            ->schema([
-                                Forms\Components\Select::make('supervisor_id')
-                                    ->label('Dibuat Oleh (Supervisor)')
-                                    ->relationship('supervisor', 'name')
-                                    ->searchable()
-                                    ->required(),
+                        Placeholder::make('header_spacer_left')
+                            ->content('')
+                            ->columnSpan(1),
+                        Placeholder::make('header_spacer_mid')
+                            ->content('')
+                            ->columnSpan(1),
+                        Placeholder::make('header_spacer_right')
+                            ->content('')
+                            ->columnSpan(1),
 
-                                Forms\Components\Select::make('site_manager_id')
-                                    ->label('Diperiksa Oleh (Site Manager)')
-                                    ->relationship('siteManager', 'name')
-                                    ->searchable()
-                                    ->required(),
+                        Select::make('supervisor_id')
+                            ->label('Supervisor')
+                            ->options(User::query()->orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->required()
+                            ->columnSpan(1.5),
 
-                                Forms\Components\Select::make('leader_hse_id')
-                                    ->label('Leader HSE Proyek')
-                                    ->relationship('leaderHse', 'name')
-                                    ->searchable()
-                                    ->required(),
+                        Select::make('site_manager_id')
+                            ->label('Site Manager')
+                            ->options(User::query()->orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->required()
+                            ->columnSpan(1.5),
 
-                                Forms\Components\Select::make('project_manager_id')
-                                    ->label('Disetujui Oleh (Project Manager)')
-                                    ->relationship('projectManager', 'name')
-                                    ->searchable()
-                                    ->required(),
-                            ]),
-                    ]),
+                        Select::make('leader_hse_id')
+                            ->label('Leader HSE Proyek')
+                            ->options(User::query()->orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->required()
+                            ->columnSpan(1.5),
 
-                /** ===== TABEL ANALISA RISIKO ===== */
+                        Select::make('project_manager_id')
+                            ->label('Project Manager')
+                            ->options(User::query()->orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->required()
+                            ->columnSpan(1.5),
+                    ])
+                    ->columns(3)
+                    ->columnSpanFull(),
+
+                // ===== PEKERJAAN UTAMA (OPSIONAL)
+                Select::make('selected_work_id')
+                    ->label('Pekerjaan Utama (opsional)')
+                    ->options(
+                        ProjectProcess::query()->orderBy('process')->pluck('process', 'id')
+                    )
+                    ->searchable()
+                    ->reactive()
+                    ->columnSpanFull(),
+
+                // ===== ANALISA RISIKO (manual + dari template HIRADC)
                 Section::make('Analisa Risiko Pekerjaan')
                     ->schema([
                         Repeater::make('steps')
-                            ->label('')
+                            ->label('Risiko Pekerjaan')
                             ->schema([
-                               Forms\Components\TextInput::make('step_number')
+                                TextInput::make('step_number')
                                     ->label('No')
                                     ->numeric()
-                                    ->disabled() // tidak bisa diedit
-                                    ->dehydrated() // tetap tersimpan
-                                    ->default(1)
-                                    ->afterStateHydrated(function (Forms\Components\TextInput $component) {
-                                        // isi hanya jika kosong
-                                        if (! $component->getState()) {
-                                            $component->state(
-                                                count($component->getContainer()->getParentComponent()->getState() ?? [])
-                                            );
-                                        }
-                                    })
-                                    ->extraAttributes([
-                                        'class' => 'w-20 text-center', // 👈 kecil & rapi
-                                    ]),
+                                    ->disabled()
+                                    ->dehydrated()
+                                    ->extraAttributes(['class' => 'text-xs']),
 
-                                Forms\Components\Textarea::make('work_sequence')
+                                TextInput::make('work_sequence')
                                     ->label('Urutan Pekerjaan')
-                                    ->required(),
+                                    ->required()
+                                    ->extraAttributes(['class' => 'text-xs']),
 
-                                Forms\Components\Textarea::make('risk_analysis')
-                                    ->label('Analisa Risiko')
-                                    ->required(),
+                                Textarea::make('risk_analysis')
+                                    ->label('Analisa Risiko (Hazard - Risk Description)')
+                                    ->rows(2)
+                                    ->required()
+                                    ->extraAttributes(['class' => 'text-xs']),
 
-                                Forms\Components\Textarea::make('risk_control')
+                                Textarea::make('risk_control')
                                     ->label('Pengendalian Risiko')
-                                    ->required(),
+                                    ->rows(2)
+                                    ->required()
+                                    ->extraAttributes(['class' => 'text-xs']),
 
-                                Forms\Components\TextInput::make('pic')
-                                    ->label('PIC'),
+                                TextInput::make('pic')
+                                    ->label('PIC')
+                                    ->extraAttributes(['class' => 'text-xs']),
 
-                                Forms\Components\DatePicker::make('target_date')
-                                    ->label('Target Waktu'),
+                                DatePicker::make('target_date')
+                                    ->label('Target')
+                                    ->native(false)
+                                    ->extraAttributes(['class' => 'text-xs']),
                             ])
                             ->columns(6)
-                            ->defaultItems(1)
-                            ->addActionLabel('Tambah Langkah Pekerjaan')
                             ->reorderable(false)
-                            ->required(),
-                    ]),
+                            ->defaultItems(0)
+                            ->columnSpanFull()
+                            ->addActionLabel('Tambah Baris'),
+                    ])
+                    ->compact()
+                    ->columnSpanFull(),
             ]);
     }
 
-    /** ================= SUBMIT ================= */
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('ambilTemplateHiradc')
+                ->label('Ambil Template HIRADC')
+                ->icon('heroicon-o-list-bullet')
+                ->form([
+                    Select::make('project_process_id')
+                        ->label('Pekerjaan Utama')
+                        ->options(
+                            ProjectProcess::query()->orderBy('process')->pluck('process', 'id')
+                        )
+                        ->required()
+                        ->reactive(),
+
+                    // pilih turunan pekerjaan dulu
+                    CheckboxList::make('work_children_ids')
+                        ->label('Pilih Template Pekerjaan (HIRADC)')
+                        ->options(function ($get) {
+                            $projectProcessId = $get('project_process_id');
+
+                            if (! $projectProcessId) {
+                                return [];
+                            }
+
+                            $workIds = WorkProcess::query()
+                                ->where('project_process_id', $projectProcessId)
+                                ->pluck('work_id');
+
+                            return Work::query()
+                                ->whereIn('id', $workIds)
+                                ->orderBy('name')
+                                ->pluck('name', 'id')
+                                ->toArray();
+                        })
+                        ->columns(1)
+                        ->required(),
+
+                    // setelah pilih pekerjaan, tampilkan daftar hazard + risk per pekerjaan
+                    Repeater::make('selected_hazards')
+                        ->label('Daftar Hazard & Risk (cek yang akan diambil)')
+                        ->schema([
+                            Checkbox::make('selected')
+                                ->label('Ambil')
+                                ->default(true),
+
+                            TextInput::make('work_name')
+                                ->label('Pekerjaan')
+                                ->disabled(),
+
+                            TextInput::make('hazard_name')
+                                ->label('Hazard')
+                                ->disabled(),
+
+                            Textarea::make('risk_description')
+                                ->label('Risk Description')
+                                ->rows(2)
+                                ->disabled(),
+                        ])
+                        ->columns(4)
+                        ->defaultItems(0)
+                        ->columnSpanFull()
+                        ->afterStateHydrated(function (Repeater $component, $state, callable $set, callable $get) {
+                            // Kalau sudah pernah diisi, jangan overwrite
+                            if (! empty($state)) {
+                                return;
+                            }
+
+                            $workIds = $get('work_children_ids') ?? [];
+                            if (empty($workIds)) {
+                                return;
+                            }
+
+                            // Ambil hazard + risk untuk semua work terpilih
+                            $works = Work::query()
+                                ->whereIn('id', $workIds)
+                                ->with(['hazards.riskAssessments'])
+                                ->orderBy('name')
+                                ->get();
+
+                            $items = [];
+
+                            foreach ($works as $work) {
+                                foreach ($work->hazards as $hazard) {
+                                    foreach ($hazard->riskAssessments as $ra) {
+                                        $items[] = [
+                                            'selected'         => true,
+                                            'work_id'          => $work->id,
+                                            'work_name'        => $work->name,
+                                            'hazard_id'        => $hazard->id,
+                                            'hazard_name'      => $hazard->name,
+                                            'risk_id'          => $ra->id,
+                                            'risk_description' => $ra->description,
+                                        ];
+                                    }
+                                }
+                            }
+
+                            $set('selected_hazards', $items);
+                        }),
+                ])
+                ->action(function (array $data): void {
+                    $steps = $this->data['steps'] ?? [];
+                    $startIndex = count($steps);
+
+                    foreach ($data['selected_hazards'] ?? [] as $item) {
+                        if (empty($item['selected'])) {
+                            continue; // hanya ambil yang dicentang
+                        }
+
+                        $workName   = $item['work_name']        ?? '';
+                        $hazardName = $item['hazard_name']      ?? '';
+                        $riskDesc   = $item['risk_description'] ?? '';
+
+                        $riskText = trim($hazardName . ' - ' . $riskDesc);
+
+                        $steps[] = [
+                            'step_number'   => null,          // diisi saat submit
+                            'work_sequence' => $workName,
+                            'risk_analysis' => $riskText,
+                            'risk_control'  => null,
+                            'pic'           => null,
+                            'target_date'   => null,
+                        ];
+                    }
+
+                    $this->data['steps'] = $steps;
+                    $this->form->fill($this->data);
+                })
+                ->modalHeading('Ambil Template HIRADC')
+                ->modalSubmitActionLabel('Masukkan ke Tabel'),
+        ];
+    }
+
     public function submit(): void
     {
         DB::transaction(function () {
-
             $jsa = Jsa::create([
-                'project_name' => $this->data['project_name'],
-                'job_name' => $this->data['job_name'],
-                'created_date' => $this->data['created_date'],
-                'supervisor_id' => $this->data['supervisor_id'],
-                'site_manager_id' => $this->data['site_manager_id'],
-                'leader_hse_id' => $this->data['leader_hse_id'],
-                'project_manager_id' => $this->data['project_manager_id'],
+                'project_name'       => $this->data['project_name'] ?? null,
+                'job_name'           => $this->data['job_name'] ?? null,
+                'created_date'       => $this->data['created_date'] ?? null,
+                'supervisor_id'      => $this->data['supervisor_id'] ?? null,
+                'site_manager_id'    => $this->data['site_manager_id'] ?? null,
+                'leader_hse_id'      => $this->data['leader_hse_id'] ?? null,
+                'project_manager_id' => $this->data['project_manager_id'] ?? null,
             ]);
 
-            foreach ($this->data['steps'] as $step) {
+            foreach (($this->data['steps'] ?? []) as $index => $step) {
                 JsaStep::create([
-                    'jsa_id' => $jsa->id,
-                    'step_number' => $step['step_number'],
-                    'work_sequence' => $step['work_sequence'],
-                    'risk_analysis' => $step['risk_analysis'],
-                    'risk_control' => $step['risk_control'],
-                    'pic' => $step['pic'] ?? null,
-                    'target_date' => $step['target_date'] ?? null,
+                    'jsa_id'        => $jsa->id,
+                    'step_number'   => $index + 1,
+                    'work_sequence' => $step['work_sequence'] ?? null,
+                    'risk_analysis' => $step['risk_analysis'] ?? null,
+                    'risk_control'  => $step['risk_control'] ?? null,
+                    'pic'           => $step['pic'] ?? null,
+                    'target_date'   => $step['target_date'] ?? null,
                 ]);
             }
         });
@@ -164,8 +332,5 @@ class JsaFormPage extends Page implements HasForms
             ->title('JSA berhasil disimpan')
             ->success()
             ->send();
-
-        $this->redirect(static::getUrl());
     }
-
 }
