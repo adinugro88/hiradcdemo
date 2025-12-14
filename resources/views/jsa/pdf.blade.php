@@ -111,16 +111,16 @@
             <td colspan="4">{{ $job_name ?? '-' }}</td>
         </tr>
         <tr>
-            <td class="nowrap"><strong>Supervisor ID</strong></td>
-            <td>{{ $supervisor_id ?? '-' }}</td>
-            <td class="nowrap"><strong>Site Manager ID</strong></td>
-            <td colspan="2">{{ $site_manager_id ?? '-' }}</td>
+            <td class="nowrap"><strong>Supervisor Name</strong></td>
+            <td>{{ $supervisor_name ?? '-' }}</td>
+            <td class="nowrap"><strong>Site Manager Name</strong></td>
+            <td colspan="2">{{ $site_manager_name ?? '-' }}</td>
         </tr>
         <tr>
-            <td class="nowrap"><strong>Leader HSE ID</strong></td>
-            <td>{{ $leader_hse_id ?? '-' }}</td>
-            <td class="nowrap"><strong>Project Manager ID</strong></td>
-            <td class="nowrap" colspan="2">{{ $project_manager_id ?? '-' }}</td>
+            <td class="nowrap"><strong>Leader HSE Name</strong></td>
+            <td>{{ $leader_hse_name ?? '-' }}</td>
+            <td class="nowrap"><strong>Project Manager Name</strong></td>
+            <td class="nowrap" colspan="2">{{ $project_manager_name ?? '-' }}</td>
         </tr>
     </table>
 
@@ -161,7 +161,7 @@
         <tr>
             <td>
                 <div><strong>Prepared by</strong></div>
-                <div class="small">Supervisor ID: {{ $supervisor_id ?? '-' }}</div>
+                <div class="small">Supervisor Name : {{ $supervisor_name ?? '-' }}</div>
                 <div class="small">Sign: ________________________</div>
                 <div class="small">Date: {{ now()->format('d/m/Y') }}</div>
             </td>
