@@ -39,4 +39,24 @@ class ProjectProcess extends Model
     {
         return $this->belongsToMany(Work::class, 'work_processes');
     }
+
+    public function risks()
+    {
+        return $this->hasMany(Risk::class);
+    }
+
+    public function controlRisks()
+    {
+        return $this->hasMany(ControlRisk::class);
+    }
+
+    public function regulations()
+    {
+        return $this->belongsToMany(
+            Regulation::class,
+            'regulation_process',
+            'project_process_id',
+            'regulations_id' // ⬅️ FIX DI SINI
+        );
+    }
 }
