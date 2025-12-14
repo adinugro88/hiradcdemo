@@ -53,7 +53,7 @@ class WorksRelationManager extends RelationManager
             ])
             ->recordActions([
                 ViewAction::make()
-                    ->url(fn ($record) => route('filament.admin.resources.works.edit', ['record' => $record])),
+                    ->url(fn($record) => route('filament.admin.resources.works.edit', ['record' => $record])),
                 // EditAction::make(), // jika ingin edit Work dari sini
                 DetachAction::make(), // lepaskan dari pivot tanpa menghapus Work
                 DeleteAction::make(), // hapus Work (hati-hati jika dipakai global)
