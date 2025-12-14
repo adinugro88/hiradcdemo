@@ -39,277 +39,258 @@ class JsaFormPage extends Page implements HasForms
     }
 
     // Update step data
-public function updateStepData(int $index, array $data): void
-{
-    $steps = $this->data['steps'] ?? [];
-
-    if (! isset($steps[$index])) {
-        return;
-    }
-
-    $steps[$index]['work_sequence'] = $data['work_sequence'] ?? $steps[$index]['work_sequence'];
-    $steps[$index]['risk_analysis'] = $data['risk_analysis'] ?? $steps[$index]['risk_analysis'];
-    $steps[$index]['risk_control']  = $data['risk_control'] ?? $steps[$index]['risk_control'];
-
-    $this->data['steps'] = $steps;
-    $this->form->fill($this->data);
-
-    Notification::make()
-        ->title('Data pekerjaan berhasil diupdate')
-        ->success()
-        ->send();
-}
-
-
-    public function form(Schema $schema): Schema
-{
-    return $schema
-        ->statePath('data')
-        ->schema([
-            Section::make('Data Utama')
-                ->headerActions([
-                    Action::make('ambilTemplateHiradc')
-    ->label('Ambil dari HIRADC')
-    ->icon('heroicon-o-list-bullet')
-    ->form([
-        Select::make('project_id')
-            ->label('Pilih Project')
-            ->options(
-                \App\Models\Project::query()
-                    ->orderBy('name')
-                    ->pluck('name', 'id')
-            )
-            ->searchable()
-            ->required(),
-    ])
-    ->action(function (array $data): void {
+    public function updateStepData(int $index, array $data): void
+    {
         $steps = $this->data['steps'] ?? [];
 
-        $projectId = $data['project_id'] ?? null;
-        if (! $projectId) {
+        if (! isset($steps[$index])) {
             return;
         }
 
-        $project = \App\Models\Project::find($projectId);
-        if ($project && empty($this->data['project_name'])) {
-            $this->data['project_name'] = $project->name;
-        }
-
-        $works = Work::query()
-            ->with(['hazards.riskAssessments', 'hazards.controlMeasures'])
-            ->orderBy('name')
-            ->get();
-
-        foreach ($works as $work) {
-            foreach ($work->hazards as $hazard) {
-                foreach ($hazard->riskAssessments as $risk) {
-                    // Hanya ambil basic_measure dari controlMeasures
-                    foreach ($hazard->controlMeasures as $cm) {
-                        $riskText    = trim($hazard->name.' - '.$risk->description);
-                        $controlText = $cm->basic_measure; // ✅ Hanya basic_measure
-
-                        // Cek apakah basic_measure tidak kosong
-                        if (! empty($controlText)) {
-                            $steps[] = [
-                                'work_sequence' => $work->name,
-                                'risk_analysis' => $riskText,
-                                'risk_control'  => $controlText, // ✅ Hanya field ini
-                                'pic'           => null,
-                                'target_date'   => null,
-                            ];
-                        }
-                    }
-                }
-            }
-        }
+        $steps[$index]['work_sequence'] = $data['work_sequence'] ?? $steps[$index]['work_sequence'];
+        $steps[$index]['risk_analysis'] = $data['risk_analysis'] ?? $steps[$index]['risk_analysis'];
+        $steps[$index]['risk_control']  = $data['risk_control'] ?? $steps[$index]['risk_control'];
 
         $this->data['steps'] = $steps;
         $this->form->fill($this->data);
 
         Notification::make()
-            ->title('Data berhasil diambil dari HIRADC')
+            ->title('Data pekerjaan berhasil diupdate')
             ->success()
             ->send();
-    })
-    ->modalHeading('Ambil Template dari HIRADC per Project')
-    ->modalSubmitActionLabel('Masukkan ke Tabel'),
+    }
 
-                ])
-                ->schema([
-                    TextInput::make('project_name')
-                        ->label('Nama Proyek')
-                        ->required()
-                        ->columnSpan(1),
-                    TextInput::make('job_name')
-                        ->label('Nama Pekerjaan')
-                        ->required()
-                        ->columnSpan(1),
-                    DatePicker::make('created_date')
-                        ->label('Tanggal Pembuatan')
-                        ->required()
-                        ->columnSpan(1),
-                    Placeholder::make('header_spacer_left')
-                        ->content('')
-                        ->columnSpan(1),
-                    Placeholder::make('header_spacer_mid')
-                        ->content('')
-                        ->columnSpan(1),
-                    Placeholder::make('header_spacer_right')
-                        ->content('')
-                        ->columnSpan(1),
-                    Select::make('supervisor_id')
-                        ->label('Supervisor')
-                        ->options(User::query()->orderBy('name')->pluck('name', 'id'))
-                        ->searchable()
-                        ->required()
-                        ->columnSpan(1.5),
-                    Select::make('site_manager_id')
-                        ->label('Site Manager')
-                        ->options(User::query()->orderBy('name')->pluck('name', 'id'))
-                        ->searchable()
-                        ->required()
-                        ->columnSpan(1.5),
-                    Select::make('leader_hse_id')
-                        ->label('Leader HSE Proyek')
-                        ->options(User::query()->orderBy('name')->pluck('name', 'id'))
-                        ->searchable()
-                        ->required()
-                        ->columnSpan(1.5),
-                    Select::make('project_manager_id')
-                        ->label('Project Manager')
-                        ->options(User::query()->orderBy('name')->pluck('name', 'id'))
-                        ->searchable()
-                        ->required()
-                        ->columnSpan(1.5),
-                ])
-                ->columns(3)
-                ->columnSpanFull(),
-
-            Section::make('Analisa Risiko Pekerjaan')
-                ->headerActions([
-                    Action::make('tambahRisikoManual')
-                        ->label('Tambah Risiko Pekerjaan')
-                        ->icon('heroicon-o-plus-circle')
-                        ->form([
-                            TextInput::make('work_sequence')
-                                ->label('Jenis Pekerjaan')
-                                ->required(),
-                            Textarea::make('risk_analysis')
-                                ->label('Hazard - Risk')
-                                ->rows(3)
-                                ->required(),
-                            Textarea::make('risk_control')
-                                ->label('Control Measure')
-                                ->rows(3)
-                                ->required(),
-                        ])
-                        ->action(function (array $data): void {
-                            $steps   = $this->data['steps'] ?? [];
-                            $steps[] = [
-                                'work_sequence' => $data['work_sequence'],
-                                'risk_analysis' => $data['risk_analysis'],
-                                'risk_control'  => $data['risk_control'],
-                                'pic'           => null,
-                                'target_date'   => null,
-                            ];
-
-                            $this->data['steps'] = $steps;
-                            $this->form->fill($this->data);
-                        })
-                        ->modalHeading('Tambah Risiko Pekerjaan')
-                        ->modalSubmitActionLabel('Tambah ke Tabel'),
-
-                    Action::make('editWorkData')
-                        ->label('Edit Data Pekerjaan')
-                        ->icon('heroicon-o-pencil')
-                        ->visible(fn () => false) // Hide dari header
-                        ->form([
-                            TextInput::make('work_sequence')
-                                ->label('Jenis Pekerjaan')
-                                ->required(),
-                            Textarea::make('risk_analysis')
-                                ->label('Hazard - Risk')
-                                ->rows(3)
-                                ->required(),
-                            Textarea::make('risk_control')
-                                ->label('Control Measure')
-                                ->rows(3)
-                                ->required(),
-                        ])
-                        ->before(function (Action $action): void {
-                            $steps = $this->data['steps'] ?? [];
-
-                            if ($this->editingIndex === null || ! isset($steps[$this->editingIndex])) {
-                                return;
-                            }
-
-                            $step = $steps[$this->editingIndex];
-                            $action->getForm()->fill([
-                                'work_sequence' => $step['work_sequence'] ?? null,
-                                'risk_analysis' => $step['risk_analysis'] ?? null,
-                                'risk_control'  => $step['risk_control'] ?? null,
-                            ]);
-                        })
-                        ->action(function (array $data): void {
-                            $steps = $this->data['steps'] ?? [];
-
-                            if ($this->editingIndex === null || ! isset($steps[$this->editingIndex])) {
-                                return;
-                            }
-
-                            $steps[$this->editingIndex]['work_sequence'] = $data['work_sequence'];
-                            $steps[$this->editingIndex]['risk_analysis'] = $data['risk_analysis'];
-                            $steps[$this->editingIndex]['risk_control']  = $data['risk_control'];
-
-                            $this->data['steps'] = $steps;
-                            $this->form->fill($this->data);
-
-                            $this->editingIndex = null;
-
-                            Notification::make()
-                                ->title('Data pekerjaan berhasil diupdate')
-                                ->success()
-                                ->send();
-                        })
-                        ->modalHeading('Edit Data Pekerjaan')
-                        ->modalSubmitActionLabel('Simpan Perubahan'),
-                ])
-                ->schema([
-                    Placeholder::make('risiko_table')
-                        ->label('')
-                        ->content(function () {
-                            $steps = $this->data['steps'] ?? [];
-
-                            return view('components.jsa-risiko-table', [
-                                'steps' => $steps,
-                            ]);
-                        })
-                        ->columnSpanFull(),
-                ])
-                ->compact()
-                ->columnSpanFull(),
-        ]);
-}
-
-
-    // Set editing index dan buka modal langsung
-    public function setEditingIndexAndOpenModal(int $index): void
+    public function form(Schema $schema): Schema
     {
-        $steps = $this->data['steps'] ?? [];
+        return $schema
+            ->statePath('data')
+            ->schema([
+                Section::make('Data Utama')
+                    ->headerActions([
+                        Action::make('ambilTemplateHiradc')
+                            ->label('Ambil dari HIRADC')
+                            ->icon('heroicon-o-list-bullet')
+                            ->form([
+                                Select::make('project_id')
+                                    ->label('Pilih Project')
+                                    ->options(
+                                        \App\Models\Project::query()
+                                            ->orderBy('name')
+                                            ->pluck('name', 'id')
+                                    )
+                                    ->searchable()
+                                    ->required(),
+                            ])
+                            ->action(function (array $data): void {
+                                $steps = $this->data['steps'] ?? [];
 
-        if (! isset($steps[$index])) {
-            Notification::make()
-                ->title('Data tidak ditemukan')
-                ->danger()
-                ->send();
+                                $projectId = $data['project_id'] ?? null;
+                                if (! $projectId) {
+                                    return;
+                                }
 
-            return;
-        }
+                                $project = \App\Models\Project::find($projectId);
+                                if ($project && empty($this->data['project_name'])) {
+                                    $this->data['project_name'] = $project->name;
+                                }
 
-        $this->editingIndex = $index;
+                                // Ambil data dengan relationship
+                                $works = Work::query()
+                                    ->with('hazards.riskAssessments.controlMeasures')
+                                    ->orderBy('name')
+                                    ->get();
 
-        // Dispatch event untuk trigger modal action
-        $this->dispatch('open-modal', id: 'action-editWorkData');
+                                foreach ($works as $work) {
+                                    foreach ($work->hazards as $hazard) {
+                                        // Loop setiap risk assessment
+                                        foreach ($hazard->riskAssessments as $risk) {
+                                            $riskText = trim($hazard->name.' - '.$risk->description);
+
+                                            // Loop setiap control measure
+                                            foreach ($hazard->controlMeasures as $cm) {
+                                                // Ambil basic_measure jika ada (tidak kosong)
+                                                $controlText = $cm->basic_measure ?? null;
+
+                                                // Hanya tambah ke steps jika ada basic_measure
+                                                if (! empty($controlText)) {
+                                                    $steps[] = [
+                                                        'work_sequence' => $work->name,
+                                                        'risk_analysis' => $riskText,
+                                                        'risk_control'  => $controlText, // ✅ Hanya basic_measure
+                                                        'pic'           => null,
+                                                        'target_date'   => null,
+                                                    ];
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                $this->data['steps'] = $steps;
+                                $this->form->fill($this->data);
+
+                                Notification::make()
+                                    ->title('Data berhasil diambil dari HIRADC')
+                                    ->success()
+                                    ->send();
+                            })
+                            ->modalHeading('Ambil Template dari HIRADC per Project')
+                            ->modalSubmitActionLabel('Masukkan ke Tabel'),
+                    ])
+                    ->schema([
+                        TextInput::make('project_name')
+                            ->label('Nama Proyek')
+                            ->required()
+                            ->columnSpan(1),
+                        TextInput::make('job_name')
+                            ->label('Nama Pekerjaan')
+                            ->required()
+                            ->columnSpan(1),
+                        DatePicker::make('created_date')
+                            ->label('Tanggal Pembuatan')
+                            ->required()
+                            ->columnSpan(1),
+                        Placeholder::make('header_spacer_left')
+                            ->content('')
+                            ->columnSpan(1),
+                        Placeholder::make('header_spacer_mid')
+                            ->content('')
+                            ->columnSpan(1),
+                        Placeholder::make('header_spacer_right')
+                            ->content('')
+                            ->columnSpan(1),
+                        Select::make('supervisor_id')
+                            ->label('Supervisor')
+                            ->options(User::query()->orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->required()
+                            ->columnSpan(1.5),
+                        Select::make('site_manager_id')
+                            ->label('Site Manager')
+                            ->options(User::query()->orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->required()
+                            ->columnSpan(1.5),
+                        Select::make('leader_hse_id')
+                            ->label('Leader HSE Proyek')
+                            ->options(User::query()->orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->required()
+                            ->columnSpan(1.5),
+                        Select::make('project_manager_id')
+                            ->label('Project Manager')
+                            ->options(User::query()->orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->required()
+                            ->columnSpan(1.5),
+                    ])
+                    ->columns(3)
+                    ->columnSpanFull(),
+
+                Section::make('Analisa Risiko Pekerjaan')
+                    ->headerActions([
+                        Action::make('tambahRisikoManual')
+                            ->label('Tambah Risiko Pekerjaan')
+                            ->icon('heroicon-o-plus-circle')
+                            ->form([
+                                TextInput::make('work_sequence')
+                                    ->label('Jenis Pekerjaan')
+                                    ->required(),
+                                Textarea::make('risk_analysis')
+                                    ->label('Hazard - Risk')
+                                    ->rows(3)
+                                    ->required(),
+                                Textarea::make('risk_control')
+                                    ->label('Control Measure')
+                                    ->rows(3)
+                                    ->required(),
+                            ])
+                            ->action(function (array $data): void {
+                                $steps   = $this->data['steps'] ?? [];
+                                $steps[] = [
+                                    'work_sequence' => $data['work_sequence'],
+                                    'risk_analysis' => $data['risk_analysis'],
+                                    'risk_control'  => $data['risk_control'],
+                                    'pic'           => null,
+                                    'target_date'   => null,
+                                ];
+
+                                $this->data['steps'] = $steps;
+                                $this->form->fill($this->data);
+                            })
+                            ->modalHeading('Tambah Risiko Pekerjaan')
+                            ->modalSubmitActionLabel('Tambah ke Tabel'),
+
+                        Action::make('editWorkData')
+                            ->label('Edit Data Pekerjaan')
+                            ->icon('heroicon-o-pencil')
+                            ->visible(fn () => false) // Hide dari header
+                            ->form([
+                                TextInput::make('work_sequence')
+                                    ->label('Jenis Pekerjaan')
+                                    ->required(),
+                                Textarea::make('risk_analysis')
+                                    ->label('Hazard - Risk')
+                                    ->rows(3)
+                                    ->required(),
+                                Textarea::make('risk_control')
+                                    ->label('Control Measure')
+                                    ->rows(3)
+                                    ->required(),
+                            ])
+                            ->before(function (Action $action): void {
+                                $steps = $this->data['steps'] ?? [];
+
+                                if ($this->editingIndex === null || ! isset($steps[$this->editingIndex])) {
+                                    return;
+                                }
+
+                                $step = $steps[$this->editingIndex];
+                                $action->getForm()->fill([
+                                    'work_sequence' => $step['work_sequence'] ?? null,
+                                    'risk_analysis' => $step['risk_analysis'] ?? null,
+                                    'risk_control'  => $step['risk_control'] ?? null,
+                                ]);
+                            })
+                            ->action(function (array $data): void {
+                                $steps = $this->data['steps'] ?? [];
+
+                                if ($this->editingIndex === null || ! isset($steps[$this->editingIndex])) {
+                                    return;
+                                }
+
+                                $steps[$this->editingIndex]['work_sequence'] = $data['work_sequence'];
+                                $steps[$this->editingIndex]['risk_analysis'] = $data['risk_analysis'];
+                                $steps[$this->editingIndex]['risk_control']  = $data['risk_control'];
+
+                                $this->data['steps'] = $steps;
+                                $this->form->fill($this->data);
+
+                                $this->editingIndex = null;
+
+                                Notification::make()
+                                    ->title('Data pekerjaan berhasil diupdate')
+                                    ->success()
+                                    ->send();
+                            })
+                            ->modalHeading('Edit Data Pekerjaan')
+                            ->modalSubmitActionLabel('Simpan Perubahan'),
+                    ])
+                    ->schema([
+                        Placeholder::make('risiko_table')
+                            ->label('')
+                            ->content(function () {
+                                $steps = $this->data['steps'] ?? [];
+
+                                return view('components.jsa-risiko-table', [
+                                    'steps' => $steps,
+                                ]);
+                            })
+                            ->columnSpanFull(),
+                    ])
+                    ->compact()
+                    ->columnSpanFull(),
+            ]);
     }
 
     // Hapus baris
