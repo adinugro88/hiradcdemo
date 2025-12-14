@@ -45,6 +45,11 @@ class JsaIndexPage extends Page implements HasTable
     protected function getTableActions(): array
     {
         return [
+            Action::make('export_pdf')
+                ->label('Export PDF')
+                ->icon('heroicon-o-document-arrow-down')
+                ->url(fn(Jsa $record) => route('jsa.pdf', $record->id))
+                ->openUrlInNewTab(),
             Action::make('edit')
                 ->label('Edit')
                 ->icon('heroicon-o-pencil')

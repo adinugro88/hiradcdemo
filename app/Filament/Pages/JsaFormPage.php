@@ -29,6 +29,22 @@ class JsaFormPage extends Page implements HasForms
 
     protected string $view = 'filament.pages.jsa-form-page';
 
+    protected function getActions(): array
+    {
+        /** @var Jsa|null $jsa */
+        $jsa = $this->record ?? null;
+
+        $url = $jsa ? route('jsa.pdf', ['jsa' => $jsa->id]) : null;
+
+        return [
+            Action::make('exportPdf')
+                ->label('Export PDF')
+                ->icon('heroicon-o-document-text')
+                ->url($url)
+                ->openUrlInNewTab(),
+        ];
+    }
+
     public array $data = [];
     public ?int $editingIndex = null;
     public ?Jsa $record = null;
@@ -101,6 +117,8 @@ class JsaFormPage extends Page implements HasForms
                     $q->with([
                         'riskAssessments',
                         'controlMeasures' => function ($cmq) {
+
+
                             $cmq->select('id', 'hazard_id', 'basic_measure')
                                 ->whereNotNull('basic_measure')
                                 ->where('basic_measure', '!=', '');
@@ -119,8 +137,8 @@ class JsaFormPage extends Page implements HasForms
                 // Semua control measure hazard ini (unik)
                 $measures = $hazard->controlMeasures
                     ->pluck('basic_measure')
-                    ->map(fn ($v) => trim((string) $v))
-                    ->filter(fn ($v) => $v !== '')
+                    ->map(fn($v) => trim((string) $v))
+                    ->filter(fn($v) => $v !== '')
                     ->unique()
                     ->values()
                     ->all();
@@ -144,13 +162,13 @@ class JsaFormPage extends Page implements HasForms
 
                     // merge measures ke risk_control
                     $existing = collect(explode(';', (string) $grouped[$key]['risk_control']))
-                        ->map(fn ($v) => trim($v))
-                        ->filter(fn ($v) => $v !== '');
+                        ->map(fn($v) => trim($v))
+                        ->filter(fn($v) => $v !== '');
 
                     $merged = $existing
                         ->merge($measures)
-                        ->map(fn ($v) => trim((string) $v))
-                        ->filter(fn ($v) => $v !== '')
+                        ->map(fn($v) => trim((string) $v))
+                        ->filter(fn($v) => $v !== '')
                         ->unique()
                         ->values()
                         ->all();
@@ -161,7 +179,7 @@ class JsaFormPage extends Page implements HasForms
         }
 
         // buang yang risk_control kosong
-        $steps = array_values(array_filter($grouped, fn ($row) => ! empty($row['risk_control'])));
+        $steps = array_values(array_filter($grouped, fn($row) => ! empty($row['risk_control'])));
 
         return $steps;
     }
