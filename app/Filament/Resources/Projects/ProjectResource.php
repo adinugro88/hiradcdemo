@@ -22,7 +22,7 @@ class ProjectResource extends Resource
 
     protected static ?int $navigationSort = 0;
 
-    protected static ?string $label = 'Template';
+    // protected static ?string $label = 'Template';
 
     // protected static ?string $recordTitleAttribute = 'Project';
 

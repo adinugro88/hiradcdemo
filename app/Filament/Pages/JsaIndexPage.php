@@ -11,6 +11,7 @@ use Filament\Tables;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use App\Filament\Pages\JsaFormPage;
+use Filament\Actions\DeleteAction;
 
 class JsaIndexPage extends Page implements HasTable
 {
@@ -41,10 +42,16 @@ class JsaIndexPage extends Page implements HasTable
         ];
     }
 
-    // Tanpa action baris dulu (tidak ada edit/hapus)
     protected function getTableActions(): array
     {
-        return [];
+        return [
+            Action::make('edit')
+                ->label('Edit')
+                ->icon('heroicon-o-pencil')
+                ->url(fn(Jsa $record) => JsaFormPage::getUrl(['record' => $record->id])),
+            DeleteAction::make()
+                ->label('Hapus'),
+        ];
     }
 
     protected function getHeaderActions(): array
