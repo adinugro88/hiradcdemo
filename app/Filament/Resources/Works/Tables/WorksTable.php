@@ -20,12 +20,7 @@ class WorksTable
                     ->searchable(),
                 TextColumn::make('description')
                     ->searchable(),
-                TextColumn::make('sixmethod.name')
-                    ->label('Six Methods')
-                    ->searchable(),
-                TextColumn::make('sixDetail.step')
-                    ->label('Six Method Detail')
-                    ->searchable(),
+               
             ])
             ->filters([
                 //
