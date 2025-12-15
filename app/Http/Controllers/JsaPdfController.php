@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Jsa;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Log;
@@ -48,6 +49,10 @@ class JsaPdfController extends Controller
             'site_manager_id' => $jsa->site_manager_id ?? null,
             'leader_hse_id' => $jsa->leader_hse_id ?? null,
             'project_manager_id' => $jsa->project_manager_id ?? null,
+            'supervisor_name' => User::find($jsa->supervisor_id)?->name ?? null,
+            'site_manager_name' => User::find($jsa->site_manager_id)?->name ?? null,
+            'leader_hse_name' => User::find($jsa->leader_hse_id)?->name ?? null,
+            'project_manager_name' => User::find($jsa->project_manager_id)?->name ?? null,
             'steps' => $jsa->steps ?? collect(),
         ];
     }
