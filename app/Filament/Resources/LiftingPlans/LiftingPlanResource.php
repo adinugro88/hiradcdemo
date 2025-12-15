@@ -9,6 +9,7 @@ use App\Filament\Resources\LiftingPlans\Schemas\LiftingPlanForm;
 use App\Filament\Resources\LiftingPlans\Tables\LiftingPlanTable;
 use App\Models\LiftingPlan;
 use BackedEnum;
+use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -17,6 +18,7 @@ use Filament\Tables\Table;
 class LiftingPlanResource extends Resource
 {
     protected static ?string $model = LiftingPlan::class;
+    protected static string|UnitEnum|null $navigationGroup = 'Equipment';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::ClipboardDocumentList;
 

@@ -13,10 +13,12 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class LiftingEquipmentResource extends Resource
 {
     protected static ?string $model = LiftingEquipment::class;
+    protected static string|UnitEnum|null $navigationGroup = 'Equipment';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::Truck;
 

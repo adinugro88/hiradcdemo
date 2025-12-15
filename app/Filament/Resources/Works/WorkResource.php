@@ -23,9 +23,9 @@ class WorkResource extends Resource
 
     // protected static bool $shouldRegisterNavigation = false;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Master';
+    protected static string|UnitEnum|null $navigationGroup = 'HIRADC';
 
-    protected static ?string $label = 'Template HIRADC';
+    protected static ?string $navigationLabel = 'Template Hiradc';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
