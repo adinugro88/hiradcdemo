@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Works\Schemas;
 
+use App\Models\SixmethodDetail;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -23,13 +24,21 @@ class WorkForm
                     ->maxLength(65535)
                     ->columnSpanFull(),
                 Select::make('sixmethods_id')
-                    ->label('Six Methods')
+                    ->label('Danger')
                     ->relationship('sixmethod', 'name')
                     ->nullable()
+                    ->live()
                     ->columnSpanFull(),
+
                 Select::make('six_detail_id')
-                    ->label('Six Method Detail')
-                    ->relationship('sixDetail', 'step')
+                    ->label('Danger Detail')
+                    ->options(
+                        fn($get) =>
+                        $get('sixmethods_id')
+                            ? SixmethodDetail::where('sixmethod_id', $get('sixmethods_id'))
+                            ->pluck('step', 'id')
+                            : []
+                    )
                     ->nullable()
                     ->columnSpanFull(),
             ]);
