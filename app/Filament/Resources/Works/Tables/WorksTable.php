@@ -18,6 +18,11 @@ class WorksTable
             ->columns([
                 TextColumn::make('name')
                     ->searchable(),
+                TextColumn::make('description')
+                    ->searchable(),
+                TextColumn::make('sixmethod.name')
+                    ->label('Six Methods')
+                    ->searchable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
