@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('sixmethod_id')->constrained('sixmethods')->onDelete('cascade');
             $table->string('step');
             $table->text('description')->nullable();
-            $table->timestamps();
+            $table->timestamps(); 
         });
     }
 
