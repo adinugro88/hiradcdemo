@@ -18,7 +18,7 @@ class HseStatsOverview extends BaseWidget
             Stat::make('Total HIRADC', work::count())
             ->icon('heroicon-o-rectangle-stack'),
             Stat::make('Total Equipment', LiftingGear::count())
-            ->icon('heroicon-m-truck'),
+            ->icon('heroicon-m-truck'), 
         ];
     }
 }
