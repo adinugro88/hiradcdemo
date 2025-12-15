@@ -6,6 +6,9 @@ use App\Models\Jsa;
 use App\Models\JsaStep;
 use App\Models\User;
 use App\Models\Work;
+use App\Models\Project;
+use App\Models\ProjectProcess;
+use App\Models\WorkProcess;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
@@ -99,27 +102,71 @@ class JsaFormPage extends Page implements HasForms
                                 Select::make('project_id')
                                     ->label('Pilih Project')
                                     ->options(
-                                        \App\Models\Project::query()
+                                        Project::query()
                                             ->orderBy('name')
                                             ->pluck('name', 'id')
                                     )
                                     ->searchable()
+                                    ->required()
+                                    ->live(),
+
+                                Select::make('project_process_id')
+                                    ->label('Pilih Proses / Pekerjaan')
+                                    ->options(function ($get) {
+                                        $projectId = $get('project_id');
+
+                                        if (! $projectId) {
+                                            return [];
+                                        }
+
+                                        return ProjectProcess::query()
+                                            ->where('project_id', $projectId)
+                                            ->orderBy('process')
+                                            ->pluck('process', 'id');
+                                    })
+                                    ->searchable()
                                     ->required(),
                             ])
                             ->action(function (array $data): void {
-                                $steps = $this->data['steps'] ?? [];
+                                $steps            = $this->data['steps'] ?? [];
+                                $projectId        = $data['project_id'] ?? null;
+                                $projectProcessId = $data['project_process_id'] ?? null;
 
-                                $projectId = $data['project_id'] ?? null;
-                                if (! $projectId) {
+                                if (! $projectId || ! $projectProcessId) {
                                     return;
                                 }
 
-                                $project = \App\Models\Project::find($projectId);
-                                if ($project && empty($this->data['project_name'])) {
+                                $project = Project::find($projectId);
+                                $process = ProjectProcess::find($projectProcessId);
+
+                                if ($project) {
                                     $this->data['project_name'] = $project->name;
                                 }
 
+                                if ($process) {
+                                    // gunakan kolom `process` sebagai nama pekerjaan
+                                    $this->data['job_name'] = $process->process;
+                                }
+
+                                // Cari semua work yang terkait dengan proses ini (work_processes)
+                                $workIds = WorkProcess::query()
+                                    ->where('project_process_id', $projectProcessId)
+                                    ->pluck('work_id');
+
+                                if ($workIds->isEmpty()) {
+                                    $this->data['steps'] = $steps;
+                                    $this->form->fill($this->data);
+
+                                    Notification::make()
+                                        ->title('Tidak ada pekerjaan yang terhubung ke proses ini')
+                                        ->warning()
+                                        ->send();
+
+                                    return;
+                                }
+
                                 $works = Work::query()
+                                    ->whereIn('id', $workIds)
                                     ->with([
                                         'hazards' => function ($query) {
                                             $query->with([
@@ -138,8 +185,9 @@ class JsaFormPage extends Page implements HasForms
                                 foreach ($works as $work) {
                                     foreach ($work->hazards as $hazard) {
                                         foreach ($hazard->riskAssessments as $risk) {
+                                            $riskText = trim($hazard->name . ' - ' . $risk->description);
+
                                             foreach ($hazard->controlMeasures as $cm) {
-                                                $riskText    = trim($hazard->name . ' - ' . $risk->description);
                                                 $controlText = $cm->basic_measure;
 
                                                 if (! empty($controlText)) {
@@ -164,7 +212,7 @@ class JsaFormPage extends Page implements HasForms
                                     ->success()
                                     ->send();
                             })
-                            ->modalHeading('Ambil Template dari HIRADC per Project')
+                            ->modalHeading('Ambil Template dari HIRADC per Project & Proses')
                             ->modalSubmitActionLabel('Masukkan ke Tabel'),
                     ])
                     ->schema([
@@ -219,9 +267,6 @@ class JsaFormPage extends Page implements HasForms
 
                 Section::make('Analisa Risiko Pekerjaan')
                     ->headerActions([
-                        
-
-                        // Tambah baris manual lewat popup
                         Action::make('tambahBarisManual')
                             ->label('Tambah baris manual')
                             ->icon('heroicon-o-plus')
@@ -240,13 +285,9 @@ class JsaFormPage extends Page implements HasForms
                             ->action(function (array $data): void {
                                 $steps = $this->data['steps'] ?? [];
 
-                                $hazardText = $data['hazard'] ?? '';
-                                $riskText   = $data['risk'] ?? '';
-
                                 $steps[] = [
                                     'work_sequence' => $data['work_sequence'] ?? null,
-                                    // format sama seperti dari HIRADC: Hazard - Risk
-                                    'risk_analysis' => trim($hazardText),
+                                    'risk_analysis' => trim($data['hazard'] ?? ''),
                                     'risk_control'  => $data['control_measure'] ?? null,
                                     'pic'           => null,
                                     'target_date'   => null,
