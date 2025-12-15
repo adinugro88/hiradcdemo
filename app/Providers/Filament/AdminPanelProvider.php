@@ -28,6 +28,13 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->navigationGroups([
+            'Dashboard',   // kalau punya group
+            'JSA',
+            'HIRADC',
+            'Equipment',
+            'Master',      // Master diposisikan terakhir
+            ])
             ->colors([
                 'primary' => Color::Amber,
             ])

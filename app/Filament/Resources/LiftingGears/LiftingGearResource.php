@@ -9,6 +9,7 @@ use App\Filament\Resources\LiftingGears\Schemas\LiftingGearForm;
 use App\Filament\Resources\LiftingGears\Tables\LiftingGearTable;
 use App\Models\LiftingGear;
 use BackedEnum;
+use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -17,6 +18,7 @@ use Filament\Tables\Table;
 class LiftingGearResource extends Resource
 {
     protected static ?string $model = LiftingGear::class;
+    protected static string|UnitEnum|null $navigationGroup = 'Equipment';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::WrenchScrewdriver;
 
