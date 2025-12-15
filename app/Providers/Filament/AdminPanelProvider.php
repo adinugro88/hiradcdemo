@@ -63,6 +63,9 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
+            ->darkMode(false)
+            ->brandLogo(asset('logo_tata.jpeg'))
+            ->brandLogoHeight('5rem')
             ->spa();
     }
 }
