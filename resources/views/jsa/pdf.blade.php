@@ -94,7 +94,7 @@
 
     <div class="header">
         <img class="logo" src="{{ public_path('images/company-logo.png') }}" alt="Company Logo">
-        <div class="title">FM_HSE-1_16 R0 – Job Safety Analysis</div>
+        <div class="title">Job Safety Analysis</div>
         <div class="meta">
             <div><strong>Date:</strong> {{ optional($jsa)->created_at?->format('d/m/Y') }}</div>
             <div><strong>Project:</strong> {{ $project_name ?? '-' }}</div>
@@ -137,14 +137,25 @@
             <th style="width: 12%">PIC</th>
             <th style="width: 12%">Target Date</th>
         </tr>
-        @forelse($steps as $step)
-            <tr>
-                <td>{{ $step->work_sequence }}</td>
-                <td class="small">{!! nl2br(e($step->risk_analysis ?? '')) !!}</td>
-                <td class="small">{!! nl2br(e($step->risk_control ?? '')) !!}</td>
-                <td class="small">{{ $step->pic ?? '-' }}</td>
-                <td class="small">{{ $step->target_date ?? '-' }}</td>
-            </tr>
+        @php($groupedSteps = collect($steps)->groupBy('work_sequence'))
+
+        @forelse($groupedSteps as $workSequence => $items)
+            @foreach ($items as $i => $step)
+                <tr>
+                    @if ($i === 0)
+                        <td class="small" rowspan="{{ $items->count() }}">
+                            {!! nl2br(e($workSequence)) !!}
+                        </td>
+                    @endif
+
+                    @if ($i === 0)
+                        <td class="small" rowspan="{{ $items->count() }}">{!! nl2br(e($step->risk_analysis ?? '')) !!}</td>
+                    @endif
+                    <td class="small">{!! nl2br(e($step->risk_control ?? '')) !!}</td>
+                    <td class="small">{{ $step->pic ?? '-' }}</td>
+                    <td class="small">{{ $step->target_date ?? '-' }}</td>
+                </tr>
+            @endforeach
         @empty
             <tr>
                 <td colspan="5" class="small">No steps defined.</td>
