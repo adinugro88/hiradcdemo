@@ -19,4 +19,9 @@ class SixmethodDetail extends Model
     {
         return $this->belongsTo(Sixmethod::class, 'sixmethod_id');
     }
+
+    public function works()
+    {
+        return $this->hasMany(Work::class, 'sixmethod_details_id');
+    }
 }

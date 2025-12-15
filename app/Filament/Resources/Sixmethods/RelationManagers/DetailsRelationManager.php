@@ -25,6 +25,7 @@ class DetailsRelationManager extends RelationManager
         return $schema
             ->components([
                 TextInput::make('step')
+                ->label('Detail')
                     ->required()
                     ->maxLength(255),
                 TextInput::make('description')
@@ -39,6 +40,7 @@ class DetailsRelationManager extends RelationManager
             ->recordTitleAttribute('step')
             ->columns([
                 TextColumn::make('step')
+                ->label('Detail')
                     ->searchable(),
                 TextColumn::make('description')
                     ->searchable(),

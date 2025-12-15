@@ -23,14 +23,9 @@ class WorksTable
                 TextColumn::make('sixmethod.name')
                     ->label('Six Methods')
                     ->searchable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('sixDetail.step')
+                    ->label('Six Method Detail')
+                    ->searchable(),
             ])
             ->filters([
                 //

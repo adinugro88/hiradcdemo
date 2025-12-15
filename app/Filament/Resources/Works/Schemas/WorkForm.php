@@ -27,6 +27,11 @@ class WorkForm
                     ->relationship('sixmethod', 'name')
                     ->nullable()
                     ->columnSpanFull(),
+                Select::make('six_detail_id')
+                    ->label('Six Method Detail')
+                    ->relationship('sixDetail', 'step')
+                    ->nullable()
+                    ->columnSpanFull(),
             ]);
     }
 }

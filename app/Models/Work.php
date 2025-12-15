@@ -45,4 +45,9 @@ class Work extends Model
     {
         return $this->belongsTo(Sixmethod::class, 'sixmethods_id');
     }
+
+    public function sixDetail(): BelongsTo
+    {
+        return $this->belongsTo(SixmethodDetail::class, 'sixmethod_details_id');
+    }
 }
