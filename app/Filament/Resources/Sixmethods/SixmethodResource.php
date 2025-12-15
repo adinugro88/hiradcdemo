@@ -22,6 +22,10 @@ class SixmethodResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'Dangers';
+
+    protected static ?string $label = 'Dangers';
+
     protected static string|UnitEnum|null $navigationGroup = 'Master';
 
     public static function form(Schema $schema): Schema

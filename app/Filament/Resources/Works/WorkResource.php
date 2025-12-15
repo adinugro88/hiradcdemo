@@ -27,6 +27,8 @@ class WorkResource extends Resource
 
     protected static ?string $navigationLabel = 'Template Hiradc';
 
+    protected static ?string $label = 'Template Hiradc';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     public static function form(Schema $schema): Schema
