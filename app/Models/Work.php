@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Work extends Model
 {
@@ -13,6 +14,7 @@ class Work extends Model
     protected $fillable = [
         'number',
         'name',
+        'sixmethods_id',
     ];
 
     /**
@@ -37,5 +39,10 @@ class Work extends Model
     public function projectProcesses()
     {
         return $this->belongsToMany(ProjectProcess::class, 'work_processes');
+    }
+
+    public function sixmethod(): BelongsTo
+    {
+        return $this->belongsTo(Sixmethod::class, 'sixmethods_id');
     }
 }

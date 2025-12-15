@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Sixmethod extends Model
 {
@@ -12,4 +13,9 @@ class Sixmethod extends Model
         'name',
         'description',
     ];
+
+    public function details(): HasMany
+    {
+        return $this->hasMany(SixmethodDetail::class, 'sixmethod_id');
+    }
 }
