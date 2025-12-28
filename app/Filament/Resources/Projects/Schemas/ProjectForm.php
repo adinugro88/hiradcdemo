@@ -41,10 +41,10 @@ class ProjectForm
                             ->required()
                             ->maxLength(255)
                             ->default('Rev.01'),
-                        TextInput::make('page_info')
-                            ->label('Page Info')
-                            ->maxLength(255)
-                            ->placeholder('e.g., 1 dari 1'),
+                        // TextInput::make('page_info')
+                        //     ->label('Page Info')
+                        //     ->maxLength(255)
+                        //     ->placeholder('e.g., 1 dari 1'),
                     ])
                     ->columns(2),
 

@@ -36,133 +36,86 @@ class ProjectProcessForm
                 ->required()
                 ->maxLength(255),
 
-            /* =====================
-             * WORK
-             * ===================== */
-            CheckboxList::make('works')
-                ->label('Work')
-                ->options(fn () => Work::pluck('name', 'id'))
-                ->columns(2)
-                ->reactive(),
-
-            /* =====================
-             * HAZARD
-             * ===================== */
-            CheckboxList::make('hazards')
-                ->label('Hazard')
-                ->visible(fn ($get) => filled($get('works')))
-                ->options(fn ($get) =>
-                    Hazard::whereIn('work_id', $get('works') ?? [])
-                        ->pluck('name', 'id')
-                )
-                ->columns(2)
-                ->reactive(),
-
-            /* =====================
-             * RISK ANALYSIS
-             * ===================== */
-            Repeater::make('risks')
-                ->label('Risk Analysis')
-                ->visible(fn ($get) => filled($get('hazards')))
+            Repeater::make('work_items')
+                ->label('Work & Hazard Analysis')
+                ->columnSpan('full')
                 ->schema([
-                    Select::make('risk_assessment_id')
-                        ->label('Risk')
-                        ->options(fn ($get) =>
-                            RiskAssessment::whereIn(
-                                'hazard_id',
-                                $get('../../hazards') ?? []
-                            )->pluck('description', 'id')
-                        )
-                        ->searchable()
+                    Select::make('work_id')
+                        ->label('Work')
+                        ->options(Work::pluck('name', 'id'))
+                        ->reactive()
                         ->required(),
 
-                    Grid::make(4)->schema([
-                        TextInput::make('probability')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(5)
-                            ->required()
-                            ->reactive()
-                            ->afterStateUpdated(fn ($set, $get) =>
-                                self::calculateRisk($set, $get)
-                            ),
+                    // === HAZARD SUBSECTION ===
+                    Repeater::make('hazard_items')
+                        ->label('Hazards')
+                        ->visible(fn($get) => filled($get('work_id')))
+                        ->schema([
+                            Select::make('hazard_id')
+                                ->label('Hazard')
+                                ->options(
+                                    fn($get) =>
+                                    Hazard::where('work_id', $get('../../work_id'))
+                                        ->pluck('name', 'id')
+                                )
+                                ->reactive()
+                                ->required(),
 
-                        TextInput::make('severity')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(5)
-                            ->required()
-                            ->reactive()
-                            ->afterStateUpdated(fn ($set, $get) =>
-                                self::calculateRisk($set, $get)
-                            ),
+                            // === RISK & CONTROL IN ONE ROW ===
+                            Grid::make(2) // 2 kolom dalam 1 baris
+                                ->schema([
 
-                        TextInput::make('total_value')
-                            ->disabled()
-                            ->dehydrated(),
+                                    // ⬅️ Kolom Kiri: RISK
+                                    Repeater::make('risks')
+                                        ->label('Risk Assessment')
+                                        ->visible(fn($get) => filled($get('hazard_id')))
+                                        ->schema([
+                                            Select::make('risk_assessment_id')
+                                                ->label('Risk')
+                                                ->options(
+                                                    fn($get) =>
+                                                    RiskAssessment::where('hazard_id', $get('../../hazard_id'))
+                                                        ->pluck('description', 'id')
+                                                )
+                                                ->required(),
 
-                        TextInput::make('category')
-                            ->disabled()
-                            ->dehydrated(),
-                    ]),
-                ]),
+                                            Grid::make(4)->schema([
+                                                TextInput::make('probability')->numeric()->reactive()
+                                                    ->afterStateUpdated(fn($set, $get) => ProjectProcessForm::calculateRisk($set, $get)),
+                                                TextInput::make('severity')->numeric()->reactive()
+                                                    ->afterStateUpdated(fn($set, $get) => ProjectProcessForm::calculateRisk($set, $get)),
+                                                TextInput::make('total_value')->disabled(),
+                                                TextInput::make('category')->disabled(),
+                                            ]),
+                                        ]),
 
-            /* =====================
-             * CONTROL MEASURES
-             * ===================== */
-            Repeater::make('control_risks')
-                ->label('Control Measures')
-                ->visible(fn ($get) => filled($get('hazards')))
-                ->schema([
-                    Select::make('control_measures_id')
-                        ->label('Control')
-                        ->options(fn () =>
-                            ControlMeasure::pluck('basic_measure', 'id')
-                        )
-                        ->searchable()
-                        ->required(),
+                                    // ➡️ Kolom Kanan: CONTROL
+                                    Repeater::make('control_measures')
+                                        ->label('Control Measures')
+                                        ->schema([
+                                            Select::make('control_measures_id')
+                                                ->label('Control')
+                                                ->options(ControlMeasure::pluck('basic_measure', 'id'))
+                                                ->required(),
 
-                    Grid::make(4)->schema([
-                        TextInput::make('probability')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(5)
-                            ->required()
-                            ->reactive()
-                            ->afterStateUpdated(fn ($set, $get) =>
-                                self::calculateRisk($set, $get)
-                            ),
+                                            Grid::make(4)->schema([
+                                                TextInput::make('probability')->numeric()->reactive()
+                                                    ->afterStateUpdated(fn($set, $get) => ProjectProcessForm::calculateRisk($set, $get)),
+                                                TextInput::make('severity')->numeric()->reactive()
+                                                    ->afterStateUpdated(fn($set, $get) => ProjectProcessForm::calculateRisk($set, $get)),
+                                                TextInput::make('total_value')->disabled(),
+                                                TextInput::make('category')->disabled(),
+                                            ]),
+                                        ]),
+                                ]),
 
-                        TextInput::make('severity')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(5)
-                            ->required()
-                            ->reactive()
-                            ->afterStateUpdated(fn ($set, $get) =>
-                                self::calculateRisk($set, $get)
-                            ),
-
-                        TextInput::make('total_value')
-                            ->disabled()
-                            ->dehydrated(),
-
-                        TextInput::make('category')
-                            ->disabled()
-                            ->dehydrated(),
-                    ]),
-                ]),
-
-            /* =====================
-             * REGULATIONS
-             * ===================== */
-            CheckboxList::make('regulations')
-                ->label('Regulations')
-                ->visible(fn ($get) => filled($get('hazards')))
-                ->options(fn () =>
-                    Regulation::pluck('title', 'id')
-                )
-                ->columns(2),
+                            // === REGULATIONS INSIDE HAZARD ===
+                            CheckboxList::make('regulations')
+                                ->label('Regulations')
+                                ->options(Regulation::pluck('title', 'id')),
+                        ]),
+                ])
+                ->addActionLabel('➕ Tambah Work'),
         ]);
     }
 

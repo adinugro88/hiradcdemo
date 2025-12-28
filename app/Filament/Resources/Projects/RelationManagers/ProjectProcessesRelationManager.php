@@ -11,6 +11,7 @@ use Filament\Actions\DissociateAction;
 use Filament\Actions\DissociateBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -27,9 +28,15 @@ class ProjectProcessesRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                TextInput::make('process')
-                    ->required()
-                    ->maxLength(255),
+                // TextInput::make('process')
+                //     ->required()
+                //     ->maxLength(255),
+                Select::make('work_id')
+                    ->label('Process')
+                    ->relationship('process', 'works')
+                    ->options(\App\Models\Work::pluck('name', 'id'))
+                    ->searchable()
+                    ->required(),
             ]);
     }
 
@@ -55,7 +62,7 @@ class ProjectProcessesRelationManager extends RelationManager
             ])
             ->recordActions([
                 ViewAction::make()
-                    ->url(fn ($record) => route('filament.admin.resources.project-processes.edit', ['record' => $record])),
+                    ->url(fn($record) => route('filament.admin.resources.project-processes.edit', ['record' => $record])),
                 // EditAction::make(),
                 // DissociateAction::make(),
                 DeleteAction::make(),
