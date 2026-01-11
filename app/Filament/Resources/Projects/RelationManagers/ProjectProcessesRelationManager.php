@@ -31,10 +31,9 @@ class ProjectProcessesRelationManager extends RelationManager
                 // TextInput::make('process')
                 //     ->required()
                 //     ->maxLength(255),
-                Select::make('work_id')
+                Select::make('process')
                     ->label('Process')
-                    ->relationship('process', 'works')
-                    ->options(\App\Models\Work::pluck('name', 'id'))
+                    ->options(\App\Models\MasterProcess::pluck('name', 'name'))
                     ->searchable()
                     ->required(),
             ]);
