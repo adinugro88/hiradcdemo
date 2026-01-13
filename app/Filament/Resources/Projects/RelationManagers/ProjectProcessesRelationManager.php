@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Projects\RelationManagers;
 
+use Filament\Actions\Action;
 use Filament\Actions\AssociateAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -60,6 +61,11 @@ class ProjectProcessesRelationManager extends RelationManager
                 // AssociateAction::make(),
             ])
             ->recordActions([
+                Action::make('pdf')
+                    ->label('View PDF')
+                    ->url(fn($record) => route('hiradc.pdf', ['id' => $record]))
+                    ->icon('heroicon-o-document')
+                    ->openUrlInNewTab(),
                 ViewAction::make()
                     ->url(fn($record) => route('filament.admin.resources.project-processes.edit', ['record' => $record])),
                 // EditAction::make(),

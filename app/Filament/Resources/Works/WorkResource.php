@@ -21,15 +21,15 @@ class WorkResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
-    // protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static string|UnitEnum|null $navigationGroup = 'HIRADC';
 
-    protected static ?string $navigationLabel = 'Template Hiradc';
+    // protected static ?string $navigationLabel = 'Template Hiradc';
 
-    protected static ?string $label = 'Template Hiradc';
+    // protected static ?string $label = 'Template Hiradc';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    // protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     public static function form(Schema $schema): Schema
     {

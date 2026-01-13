@@ -24,11 +24,11 @@ class MasterProcessResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'HIRADC';
 
-    protected static ?string $navigationLabel = 'Master Proses';
+    protected static ?string $navigationLabel = 'Template Hiradc';
 
-    protected static ?string $label = 'Master Proses';
+    protected static ?string $label = 'Template Hiradc';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedListBullet;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     public static function form(Schema $schema): Schema
     {

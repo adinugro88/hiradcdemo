@@ -10,6 +10,7 @@ use App\Models\ControlMeasures;
 use App\Models\Regulation;
 use App\Models\Regulations;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -37,17 +38,13 @@ class ProjectProcessForm
                 ->required()
                 ->maxLength(255),
 
+            Hidden::make('_risk_control_data')
+                ->dehydrated()
+                ->default('{}'),
+
             ViewField::make('layout')
                 ->view('forms.project-process.work-item')
                 ->columnSpanFull(),
-            
-            // Repeater::make('work_items')
-            //     ->label('Work & Hazard Analysis')
-            //     ->columnSpanFull()
-            //     ->schema([
-            //         ViewField::make('layout')
-            //             ->view('forms.project-process.work-item'),
-            //     ])
 
         ]);
     }

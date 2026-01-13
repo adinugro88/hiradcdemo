@@ -116,7 +116,7 @@
                                 {{ $hazard->name }}
                             </label>
 
-                            <div class="tree-sub hidden" data-hazard="{{ $hazard->id }}">
+                            <div class="tree-sub" data-hazard="{{ $hazard->id }}">
 
                                 {{-- RISKS --}}
                                 <div class="section-title">Risks</div>
@@ -129,11 +129,11 @@
 
                                     <div class="form-row hidden" data-risk="{{ $risk->id }}">
                                         <input type="number" placeholder="Probability"
-                                            name="risks[{{ $risk->id }}][p]">
-                                        <input type="number" placeholder="Severity"
-                                            name="risks[{{ $risk->id }}][s]">
-                                        <input readonly name="risks[{{ $risk->id }}][total]">
-                                        <input readonly name="risks[{{ $risk->id }}][cat]">
+                                            data-risk-id="{{ $risk->id }}" class="risk-probability">
+                                        <input type="number" placeholder="Severity" data-risk-id="{{ $risk->id }}"
+                                            class="risk-severity">
+                                        <input readonly data-risk-id="{{ $risk->id }}" class="risk-total">
+                                        <input readonly data-risk-id="{{ $risk->id }}" class="risk-category">
                                     </div>
                                 @endforeach
 
@@ -150,11 +150,11 @@
 
                                     <div class="form-row hidden" data-control="{{ $c->id }}">
                                         <input type="number" placeholder="Probability"
-                                            name="controls[{{ $c->id }}][p]">
+                                            data-control-id="{{ $c->id }}" class="control-probability">
                                         <input type="number" placeholder="Severity"
-                                            name="controls[{{ $c->id }}][s]">
-                                        <input readonly name="controls[{{ $c->id }}][total]">
-                                        <input readonly name="controls[{{ $c->id }}][cat]">
+                                            data-control-id="{{ $c->id }}" class="control-severity">
+                                        <input readonly data-control-id="{{ $c->id }}" class="control-total">
+                                        <input readonly data-control-id="{{ $c->id }}" class="control-category">
                                     </div>
                                 @endforeach
 
@@ -168,45 +168,149 @@
 
     </div>
 
+    <!-- Hidden input to store collected data -->
+    {{-- <input type="hidden" id="riskControlDataInput" name="_risk_control_data"> --}}
+    {{-- <input type="hidden" id="riskControlDataInput" wire:model.defer="_risk_control_data" /> --}}
+    <input type="hidden" id="riskControlDataInput">
+
     <script>
+        // Store collected data
+        let riskControlData = {
+            works: {},
+            hazards: {},
+            risks: {},
+            controls: {}
+        };
+
         document.addEventListener('change', e => {
 
             if (e.target.classList.contains('work')) {
                 document.querySelector(`[data-work="${e.target.dataset.id}"]`)
                     .classList.toggle('hidden', !e.target.checked);
+                const id = e.target.dataset.id;
+                riskControlData.works[id] = e.target.checked;
             }
 
             if (e.target.classList.contains('hazard')) {
-                document.querySelector(`[data-hazard="${e.target.dataset.id}"]`)
-                    .classList.toggle('hidden', !e.target.checked);
+                const hazardCheckbox = e.target;
+                const hazardId = hazardCheckbox.dataset.id;
+                const hazardContainer = document.querySelector(`[data-hazard="${hazardId}"]`);
+
+                // Toggle hazard container visibility
+                // hazardContainer.classList.toggle('hidden', !hazardCheckbox.checked);
+
+                // Auto-check/uncheck all risks and controls within this hazard
+                hazardContainer.querySelectorAll('.risk, .control').forEach(checkbox => {
+                    checkbox.checked = hazardCheckbox.checked;
+                    checkbox.dispatchEvent(new Event('change', {
+                        bubbles: true
+                    }));
+                });
+
+                const id = e.target.dataset.id;
+                riskControlData.hazards[id] = e.target.checked;
             }
+
+            // if (e.target.classList.contains('hazard')) {
+            //     document.querySelector(`[data-hazard="${e.target.dataset.id}"]`)
+            //         .classList.toggle('hidden', !e.target.checked);
+            // }
 
             if (e.target.classList.contains('risk')) {
                 document.querySelector(`[data-risk="${e.target.dataset.id}"]`)
                     .classList.toggle('hidden', !e.target.checked);
+                const id = e.target.dataset.id;
+                riskControlData.risks[id] = riskControlData.risks[id] || {};
+                riskControlData.risks[id].checked = e.target.checked;
             }
 
             if (e.target.classList.contains('control')) {
                 document.querySelector(`[data-control="${e.target.dataset.id}"]`)
                     .classList.toggle('hidden', !e.target.checked);
+                const id = e.target.dataset.id;
+                riskControlData.controls[id] = riskControlData.controls[id] || {};
+                riskControlData.controls[id].checked = e.target.checked;
             }
+
+            // Auto-save data
+            updateHiddenInput();
         });
 
         document.addEventListener('input', e => {
-            if (!e.target.closest('[data-risk],[data-control]')) return;
-
             const row = e.target.closest('[data-risk],[data-control]');
-            const p = row.querySelector('[placeholder="Probability"]').value || 0;
-            const s = row.querySelector('[placeholder="Severity"]').value || 0;
-            const total = p * s;
+            if (!row) return;
 
-            row.querySelector('[name$="[total]"]').value = total;
-            row.querySelector('[name$="[cat]"]').value =
-                total <= 1 ? 'Very Low' :
-                total <= 5 ? 'Low' :
-                total <= 10 ? 'Medium' :
-                total <= 15 ? 'High' : 'Extreme';
+            if (e.target.classList.contains('risk-probability') ||
+                e.target.classList.contains('risk-severity')) {
+
+                const riskId = e.target.dataset.riskId;
+                const p = row.querySelector('.risk-probability').value || 0;
+                const s = row.querySelector('.risk-severity').value || 0;
+                const total = p * s;
+
+                row.querySelector('.risk-total').value = total;
+                row.querySelector('.risk-category').value = calculateCategory(total);
+
+                // Update data object
+                riskControlData.risks[riskId] = {
+                    ...(riskControlData.risks[riskId] || {}),
+                    probability: parseInt(p) || 0,
+                    severity: parseInt(s) || 0,
+                    total: total,
+                    category: calculateCategory(total)
+                };
+
+            }
+
+            if (e.target.classList.contains('control-probability') ||
+                e.target.classList.contains('control-severity')) {
+
+                const controlId = e.target.dataset.controlId;
+                const p = row.querySelector('.control-probability').value || 0;
+                const s = row.querySelector('.control-severity').value || 0;
+                const total = p * s;
+
+                row.querySelector('.control-total').value = total;
+                row.querySelector('.control-category').value = calculateCategory(total);
+
+                // Update data object
+                riskControlData.controls[controlId] = {
+                    ...(riskControlData.controls[controlId] || {}),
+                    probability: parseInt(p) || 0,
+                    severity: parseInt(s) || 0,
+                    total: total,
+                    category: calculateCategory(total)
+                };
+            }
+
+            // Update hidden input
+            updateHiddenInput();
         });
+
+        function calculateCategory(total) {
+            if (total <= 1) return 'Very Low';
+            if (total <= 5) return 'Low';
+            if (total <= 10) return 'Medium';
+            if (total <= 15) return 'High';
+            return 'Extreme';
+        }
+
+        function updateHiddenInput() {
+            const json = JSON.stringify(riskControlData);
+
+            // Cari form Filament (pasti ada)
+            const form = document.querySelector('form[wire\\:submit]');
+
+            if (!form) return;
+
+            const wireId = form.getAttribute('wire:id');
+
+            Livewire.find(wireId).set('_risk_control_data', json);
+        }
+
+        // Initialize hidden input
+        document.addEventListener('DOMContentLoaded', updateHiddenInput);
+        updateHiddenInput();
     </script>
 
 </div>
