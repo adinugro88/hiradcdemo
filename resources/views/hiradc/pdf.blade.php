@@ -73,21 +73,20 @@
         <tbody>
             {{-- @dd($projectProcess) --}}
             @foreach ($projectProcess->works as $work)
-                {{-- @dd($work); --}}
                 @php
-                    $risksForWork = $projectProcess->risks();
-                    // dd($risksForWork);
+                    $workRisks = $risks->filter(function($r) use ($work) {
+                        return optional($r->riskAssessment->hazard)->work_id == $work->id;
+                    });
                 @endphp
-                @foreach ($risks as $risk)
+                @foreach ($workRisks as $risk)
                     @php
-                        $controlRisk = $projectProcess->controlRisks->firstWhere('risk_id', $risk->id);
-                        $regulation = $projectProcess->regulations->firstWhere('risk_id', $risk->id);
+                        $controlMeasure = $risk->riskAssessment->hazard->controlMeasures->first();
+                        $controlRisk = null;
+                        if ($controlMeasure) {
+                             $controlRisk = $projectProcess->controlRisks->firstWhere('control_measures_id', $controlMeasure->id);
+                        }
                     @endphp
                     <tr>
-                        {{-- @if ($loop->first)
-                            <td rowspan="{{ $risksForWork->count() }}">{{ $loop->parent->iteration }}</td>
-                            <td rowspan="{{ $risksForWork->count() }}" class="left">{{ $work->name }}</td>
-                        @endif --}}
                         <td>{{ $loop->parent->iteration }}</td>
                         <td class="left">{{ $work->name }}</td>
                         <td class="left">{{ $risk->riskAssessment->hazard->name }}</td>
@@ -100,12 +99,12 @@
                             {{ $risk->riskAssessment->hazard->regulations->first()->title ?? '-' }}
                         </td>
                         <td class="left">
-                            {{ $risk->riskAssessment->hazard->controlMeasures->first()->basic_measure ?? '-' }}
+                            {{ $controlMeasure->basic_measure ?? '-' }}
                         </td>
-                        <td>{{ $controlRisk ? $controlRisk->post_probability : '-' }}</td>
-                        <td>{{ $controlRisk ? $controlRisk->post_severity : '-' }}</td>
-                        <td>{{ $controlRisk ? $controlRisk->post_risk_value : '-' }}</td>
-                        <td>{{ $controlRisk ? $controlRisk->post_risk_category : '-' }}</td>
+                        <td>{{ $controlRisk ? $controlRisk->probability : '-' }}</td>
+                        <td>{{ $controlRisk ? $controlRisk->severity : '-' }}</td>
+                        <td>{{ $controlRisk ? $controlRisk->total_value : '-' }}</td>
+                        <td>{{ $controlRisk ? $controlRisk->category : '-' }}</td>
                     </tr>
                 @endforeach
             @endforeach
@@ -117,10 +116,10 @@
 
     <table style="width:100%; border:none;">
         <tr>
-            <td style="border:none; text-align:center;">Dibuat Oleh<br><br><b>HSE Officer</b></td>
-            <td style="border:none; text-align:center;">Diperiksa Oleh<br><br><b>Koord HSE</b></td>
-            <td style="border:none; text-align:center;">Disetujui Oleh<br><br><b>Project Manager</b></td>
-            <td style="border:none; text-align:center;">Diketahui Oleh<br><br><b>Client ACS</b></td>
+            <td style="border:none; text-align:center;">Dibuat Oleh<br><br><b>HSE Officer</b><br><br><br>{{ $projectProcess->prepared_by ?? '(...................)' }}</td>
+            <td style="border:none; text-align:center;">Diperiksa Oleh<br><br><b>Koord HSE</b><br><br><br>{{ $projectProcess->checked_by ?? '(...................)' }}</td>
+            <td style="border:none; text-align:center;">Disetujui Oleh<br><br><b>Project Manager</b><br><br><br>{{ $projectProcess->approved_by ?? '(...................)' }}</td>
+            <td style="border:none; text-align:center;">Diketahui Oleh<br><br><b>Client ACS</b><br><br><br>{{ $projectProcess->acknowledged_by ?? '(...................)' }}</td>
         </tr>
     </table>
 

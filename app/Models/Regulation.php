@@ -9,8 +9,6 @@ class Regulation extends Model
     protected $fillable = [
         'hazard_id',
         'title',
-        'reference_number',
-        'description',
     ];
 
     public function hazard()

@@ -13,12 +13,18 @@ class HazardForm
     {
         return $schema
             ->components([
+                //output name of work process
                 Select::make('work_id')
-                    ->relationship('work', 'id')
+                    ->relationship('work', 'name')
                     ->searchable()
                     ->preload()
                     ->required()
-                    ->label('Work Process'),
+                    ->label('Work Process')
+                    //output name of work process
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        $set('work_name', $state);
+                    })
+                    ,
                 TextInput::make('name')
                     ->label('Hazard Name')
                     ->required()

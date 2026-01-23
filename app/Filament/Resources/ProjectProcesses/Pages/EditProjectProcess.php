@@ -24,33 +24,67 @@ class EditProjectProcess extends EditRecord
      */
     protected function mutateFormDataBeforeFill(array $data): array
     {
+        // Build _risk_control_data structure
+        $riskControlData = [
+            'works' => [],
+            'risks' => [],
+            'controls' => [],
+        ];
+
         // WORKS
-        $data['works'] = $this->record
-            ->works()
-            ->pluck('works.id')
-            ->toArray();
+        foreach ($this->record->works as $work) {
+            $riskControlData['works'][$work->id] = true;
+        }
 
         // RISKS
-        $data['risks'] = $this->record->risks
-            ->map(fn($risk) => [
-                'risk_assessment_id' => $risk->risk_assessment_id,
-                'probability'        => $risk->probability,
-                'severity'           => $risk->severity,
-                'total_value'        => $risk->total_value,
-                'category'           => $risk->category,
-            ])
-            ->toArray();
+        foreach ($this->record->risks as $risk) {
+            $riskControlData['risks'][$risk->risk_assessment_id] = [
+                'checked' => true,
+                'probability' => $risk->probability,
+                'severity' => $risk->severity,
+                'total' => $risk->total_value,
+                'category' => $risk->category,
+            ];
+        }
 
         // CONTROL RISKS
-        $data['control_risks'] = $this->record->controlRisks
-            ->map(fn($control) => [
-                'control_measures_id' => $control->control_measures_id,
-                'probability'         => $control->probability,
-                'severity'            => $control->severity,
-                'total_value'         => $control->total_value,
-                'category'            => $control->category,
-            ])
-            ->toArray();
+        foreach ($this->record->controlRisks as $control) {
+            $riskControlData['controls'][$control->control_measures_id] = [
+                'checked' => true,
+                'probability' => $control->probability,
+                'severity' => $control->severity,
+                'total' => $control->total_value,
+                'category' => $control->category,
+            ];
+        }
+
+        // INFER HAZARDS (UI State)
+        // If a risk or control is checked, its parent hazard should be checked.
+        // We need to look up hazards for these risks/controls.
+        // Since we don't have direct Hazard ID in Risk/ControlRisk models (only via relationships),
+        // we can either load them or just iterate the Works->Hazards->Risks structure if we had it.
+        // But here we only have the saved records.
+        
+        // Strategy: Iterate through ALL works (loaded for the form) and check if they have selected risks.
+        // However, standard approach:
+        
+        $riskIds = array_keys($riskControlData['risks']);
+        $controlIds = array_keys($riskControlData['controls']);
+        
+        if (!empty($riskIds) || !empty($controlIds)) {
+            // Find hazards for these risks
+            $relatedHazards = \App\Models\Hazard::whereHas('riskAssessments', function($q) use ($riskIds) {
+                $q->whereIn('id', $riskIds);
+            })->orWhereHas('controlMeasures', function($q) use ($controlIds) {
+                $q->whereIn('id', $controlIds);
+            })->pluck('id');
+            
+            foreach ($relatedHazards as $hazardId) {
+                $riskControlData['hazards'][$hazardId] = true;
+            }
+        }
+
+        $data['_risk_control_data'] = json_encode($riskControlData);
 
         // REGULATIONS
         $data['regulations'] = $this->record
@@ -70,19 +104,18 @@ class EditProjectProcess extends EditRecord
         DB::transaction(function () use ($record, $data) {
 
             // MAIN
-            $record->update([
-                'project_id' => $data['project_id'],
-                'process'    => $data['process'],
-            ]);
-
-            // WORKS (pivot work_processes)
-            if (isset($data['works'])) {
-                $record->works()->sync($data['works']);
+            // MAIN
+            $mainData = [];
+            if (isset($data['project_id'])) $mainData['project_id'] = $data['project_id'];
+            if (array_key_exists('process', $data)) $mainData['process'] = $data['process'];
+            if (array_key_exists('prepared_by', $data)) $mainData['prepared_by'] = $data['prepared_by'];
+            if (array_key_exists('checked_by', $data)) $mainData['checked_by'] = $data['checked_by'];
+            if (array_key_exists('approved_by', $data)) $mainData['approved_by'] = $data['approved_by'];
+            if (array_key_exists('acknowledged_by', $data)) $mainData['acknowledged_by'] = $data['acknowledged_by'];
+            
+            if (!empty($mainData)) {
+                $record->update($mainData);
             }
-
-            // CLEAR OLD DATA
-            $record->risks()->delete();
-            $record->controlRisks()->delete();
 
             // HANDLE TREE DATA
             if (!empty($data['_risk_control_data'])) {
@@ -91,6 +124,19 @@ class EditProjectProcess extends EditRecord
                     : $data['_risk_control_data'];
 
                 if (is_array($riskControlData)) {
+
+                    // WORKS
+                    $worksIds = [];
+                    foreach (($riskControlData['works'] ?? []) as $workId => $isChecked) {
+                         if ($isChecked) {
+                             $worksIds[] = $workId;
+                         }
+                    }
+                    $record->works()->sync($worksIds);
+
+                    // CLEAR OLD DATA
+                    $record->risks()->delete();
+                    $record->controlRisks()->delete();
 
                     // RISKS
                     foreach (($riskControlData['risks'] ?? []) as $riskId => $riskData) {

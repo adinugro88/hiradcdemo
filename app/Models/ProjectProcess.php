@@ -14,6 +14,11 @@ class ProjectProcess extends Model
     protected $fillable = [
         'project_id',
         'process',
+        '_risk_control_data',
+        'prepared_by',
+        'checked_by',
+        'approved_by',
+        'acknowledged_by',
     ];
 
     /**
@@ -56,7 +61,7 @@ class ProjectProcess extends Model
             Regulation::class,
             'regulation_process',
             'project_process_id',
-            'regulations_id' // ⬅️ FIX DI SINI
+            'regulations_id'
         );
     }
 }

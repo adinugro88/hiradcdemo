@@ -18,6 +18,13 @@ class ProjectProcessesTable
                     ->searchable(),
                 TextColumn::make('process')
                     ->searchable(),
+                TextColumn::make('regulations.title')
+                    ->label('Regulations')
+                    ->badge()
+                    ->listWithLineBreaks()
+                    ->limitList(3)
+                    ->expandableLimitedList()
+                    ->searchable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

@@ -15,6 +15,7 @@ class Work extends Model
         'number',
         'name',
         'sixmethods_id',
+        'sixmethod_details_id',
     ];
 
     /**

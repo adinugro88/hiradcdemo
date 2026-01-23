@@ -31,12 +31,54 @@ class ProjectProcessForm
                 ->relationship('project', 'name')
                 ->searchable()
                 ->preload()
+                ->hiddenOn('edit')
                 ->required(),
+            
+            TextInput::make('project_name_view')
+                ->label('Project')
+                ->disabled()
+                ->dehydrated(false)
+                ->visibleOn('edit')
+                ->afterStateHydrated(fn ($component, $record) => $component->state($record->project->name ?? '-')),
 
-            TextInput::make('process')
+            Select::make('process')
                 ->label('Process Name')
-                ->required()
-                ->maxLength(255),
+                ->disabledOn('edit')
+                ->options(\App\Models\MasterProcess::pluck('name', 'name'))
+                ->searchable()
+                ->preload()
+                ->createOptionForm([
+                    TextInput::make('name')
+                        ->required()
+                        ->maxLength(255),
+                ])
+                ->createOptionUsing(function (array $data) {
+                    return \App\Models\MasterProcess::create($data)->name;
+                })
+                ->live()
+                ->afterStateUpdated(function ($state, $set, $get, $component) {
+                    if (!$state) return;
+                    
+                    $masterProcess = \App\Models\MasterProcess::with('works')->where('name', $state)->first();
+                    
+                    if ($masterProcess) {
+                        $currentData = json_decode($get('_risk_control_data') ?? '{}', true);
+                        if (!is_array($currentData)) $currentData = [];
+                        
+                        $works = [];
+                        foreach ($masterProcess->works as $work) {
+                            $works[$work->id] = true;
+                        }
+                        
+                        $currentData['works'] = $works;
+                        $jsonData = json_encode($currentData);
+                        
+                        $set('_risk_control_data', $jsonData);
+                        
+                        $component->getLivewire()->dispatch('risk-data-updated', data: $jsonData);
+                    }
+                })
+                ->required(),
 
             Hidden::make('_risk_control_data')
                 ->dehydrated()
@@ -44,6 +86,35 @@ class ProjectProcessForm
 
             ViewField::make('layout')
                 ->view('forms.project-process.work-item')
+                ->columnSpanFull(),
+            
+            //fill width approvals
+            \Filament\Schemas\Components\Section::make('Approvals')
+                ->schema([
+                    \Filament\Schemas\Components\Grid::make(2)
+                        ->schema([
+                            Select::make('prepared_by')
+                                ->label('Dibuat Oleh (HSE Officer)')
+                                ->options(\App\Models\User::pluck('name', 'name'))
+                                ->searchable()
+                                ->preload(),
+                            Select::make('checked_by')
+                                ->label('Diperiksa Oleh (Koord HSE)')
+                                ->options(\App\Models\User::pluck('name', 'name'))
+                                ->searchable()
+                                ->preload(),
+                            Select::make('approved_by')
+                                ->label('Disetujui Oleh (Project Manager)')
+                                ->options(\App\Models\User::pluck('name', 'name'))
+                                ->searchable()
+                                ->preload(),
+                            Select::make('acknowledged_by')
+                                ->label('Diketahui Oleh (Client ACS)')
+                                ->options(\App\Models\User::pluck('name', 'name'))
+                                ->searchable()
+                                ->preload(),
+                        ]),
+                ])
                 ->columnSpanFull(),
 
         ]);

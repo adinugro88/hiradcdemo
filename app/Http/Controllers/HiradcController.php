@@ -13,7 +13,9 @@ class HiradcController extends Controller
     public function pdf($id)
     {
         $projectProcess = ProjectProcess::with(['works', 'risks', 'controlRisks', 'regulations'])->findOrFail($id);
-        $risks = Risk::with('riskAssessment')->where('project_process_id', $id)->get();
+        $risks = Risk::with(['riskAssessment.hazard.work', 'riskAssessment.hazard.controlMeasures', 'riskAssessment.hazard.regulations'])
+            ->where('project_process_id', $id)
+            ->get();
         $controlRisks = ControlRisk::all();
         $regulations = Regulation::all();
 

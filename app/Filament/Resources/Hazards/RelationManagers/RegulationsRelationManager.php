@@ -28,12 +28,6 @@ class RegulationsRelationManager extends RelationManager
                 TextInput::make('title')
                     ->required()
                     ->maxLength(255),
-                TextInput::make('reference_number')
-                    ->label('Reference No.')
-                    ->maxLength(255),
-                Textarea::make('description')
-                    ->rows(3)
-                    ->columnSpanFull(),
             ]);
     }
 
@@ -43,10 +37,6 @@ class RegulationsRelationManager extends RelationManager
             ->recordTitleAttribute('title')
             ->columns([
                 TextColumn::make('title')
-                    ->searchable(),
-                TextColumn::make('reference_number')
-                    ->label('Ref. No.')
-                    ->limit(30)
                     ->searchable(),
                 TextColumn::make('created_at')
                     ->dateTime()

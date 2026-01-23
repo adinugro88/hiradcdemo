@@ -30,7 +30,7 @@ class WorkForm
                     ->live()
                     ->columnSpanFull(),
 
-                Select::make('six_detail_id')
+                Select::make('sixmethod_details_id')
                     ->label('Danger Detail')
                     ->options(
                         fn($get) =>
